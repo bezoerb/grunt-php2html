@@ -7,66 +7,79 @@
  */
 'use strict';
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
 
-  // Project configuration.
-  grunt.initConfig({
-    jshint: {
-      all: [
-        'Gruntfile.js',
-		'tasks/**/*.js',
-        '<%= nodeunit.tests %>'
-      ],
-      options: {
-        jshintrc: '.jshintrc'
-      }
-    },
+	// Make an empty dir for testing as git doesn't track empty folders.
+	//grunt.file.mkdir('test/fixtures/empty_folder');
+	//grunt.file.mkdir('test/expected/copy_test_mix/empty_folder');
 
-    // Before generating any new files, remove any previously-created files.
-    clean: {
-      tests: ['tmp']
-    },
+	// Project configuration.
+	grunt.initConfig({
+		jshint: {
+			all: [
+				'Gruntfile.js',
+				'tasks/**/*.js',
+				'<%= nodeunit.tests %>'
+			],
+			options: {
+				jshintrc: '.jshintrc'
+			}
+		},
 
-    // Configuration to be run (and then tested).
-    php2html: {
-      default_options: {
-        options: {
-        },
-        files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
-      },
-      custom_options: {
-        options: {
-          separator: ': ',
-          punctuation: ' !!!'
-        },
-        files: {
-          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
-      }
-    },
+		// Before generating any new files, remove any previously-created files.
+		clean: {
+			tests: ['tmp']
+		},
 
-    // Unit tests.
-    nodeunit: {
-      tests: ['test/*_test.js']
-    }
+		// Configuration to be run (and then tested).
+		php2html: {
+			main: {
+				files: [
+					{expand: true, cwd: 'test/fixtures/', src: ['*.php'], dest: 'tmp', ext: '.html' }
+				]
+			}
 
-  });
+			/*,
 
-  // Actually load this plugin's task(s).
-  grunt.loadTasks('tasks');
 
-  // These plugins provide necessary tasks.
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-nodeunit');
+			default_options: {
+				options: {
+				},
+				files: {
+					'tmp/default_options': ['test/fixtures/*.php', 'test/fixtures/123']
+				}
+			},
+			custom_options: {
+				options: {
+					separator: ': ',
+					punctuation: ' !!!'
+				},
+				files: {
+					'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
+				}
+			}*/
+		},
 
-  // Whenever the "test" task is run, first clean the "tmp" dir, then run this
-  // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'php2html', 'nodeunit']);
+		// Unit tests.
+		nodeunit: {
+			tests: ['test/*_test.js']
+		}
 
-  // By default, lint and run all tests.
-  grunt.registerTask('default', ['jshint', 'test']);
+	});
+
+	// Actually load this plugin's task(s).
+	grunt.loadTasks('tasks');
+
+	// These plugins provide necessary tasks.
+	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-contrib-clean');
+	grunt.loadNpmTasks('grunt-contrib-nodeunit');
+
+	// Whenever the "test" task is run, first clean the "tmp" dir, then run this
+	// plugin's task(s), then test the result.
+	grunt.registerTask('test', ['clean', 'php2html', 'nodeunit']);
+
+	// By default, lint and run all tests.
+	grunt.registerTask('default', ['jshint', 'test']);
 
 };
