@@ -15,7 +15,6 @@ module.exports = function (grunt) {
 		http = require('http'),
 		request = require('request'),
 		gateway = require('gateway'),
-		port = 8888,
 		app,middleware;
 
 
@@ -24,9 +23,7 @@ module.exports = function (grunt) {
 
 	grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function () {
 
-		var options = this.options();
 		var cb = this.async();
-
 
 		if (this.files.length < 1) {
 			grunt.log.warn('Destination not written because no source files were provided.');
@@ -45,7 +42,6 @@ module.exports = function (grunt) {
 				res.end();
 			});
 		}).listen(8888);
-
 
 
 		grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
@@ -96,20 +92,13 @@ module.exports = function (grunt) {
 				nextFileObj();
 			});
 
-
 		}, cb);
 	});
 
 	var compilePhp = function (file, callback) {
-
 		request('http://localhost:8888/' + file, function (error, response, body) {
-			if (!error && response.statusCode === 200) {
-				callback(body,error); // Print the google web page.
-
-			}
+			callback(body,error);
 		}).end();
-
-		//http.request(options, callback).end();
 	};
 
 

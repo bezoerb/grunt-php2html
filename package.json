@@ -31,7 +31,9 @@
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-clean": "~0.4.0",
     "grunt-contrib-nodeunit": "~0.2.0",
-    "grunt": "~0.4.1"
+    "grunt": "~0.4.1",
+    "gateway": "~0.1.1",
+    "request": "~2.25.0"
   },
   "peerDependencies": {
     "grunt": "~0.4.1"
