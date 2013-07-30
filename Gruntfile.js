@@ -5,7 +5,6 @@
  * Copyright (c) 2013 Ben Zörb
  * Licensed under the MIT license.
  */
-
 'use strict';
 
 module.exports = function(grunt) {
@@ -15,17 +14,17 @@ module.exports = function(grunt) {
     jshint: {
       all: [
         'Gruntfile.js',
-        'tasks/*.js',
-        '<%= nodeunit.tests %>',
+		'tasks/**/*.js',
+        '<%= nodeunit.tests %>'
       ],
       options: {
-        jshintrc: '.jshintrc',
-      },
+        jshintrc: '.jshintrc'
+      }
     },
 
     // Before generating any new files, remove any previously-created files.
     clean: {
-      tests: ['tmp'],
+      tests: ['tmp']
     },
 
     // Configuration to be run (and then tested).
@@ -34,24 +33,24 @@ module.exports = function(grunt) {
         options: {
         },
         files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123'],
-        },
+          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123']
+        }
       },
       custom_options: {
         options: {
           separator: ': ',
-          punctuation: ' !!!',
+          punctuation: ' !!!'
         },
         files: {
-          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123'],
-        },
-      },
+          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
+        }
+      }
     },
 
     // Unit tests.
     nodeunit: {
-      tests: ['test/*_test.js'],
-    },
+      tests: ['test/*_test.js']
+    }
 
   });
 

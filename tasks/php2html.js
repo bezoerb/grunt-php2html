@@ -5,7 +5,6 @@
  * Copyright (c) 2013 Ben Zörb
  * Licensed under the MIT license.
  */
-
 'use strict';
 
 module.exports = function(grunt) {
