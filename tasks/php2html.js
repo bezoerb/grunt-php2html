@@ -25,6 +25,12 @@ module.exports = function (grunt) {
 
 		var cb = this.async();
 
+		var options = this.options({
+			processLinks: true,
+			process: false
+		});
+
+
 		if (this.files.length < 1) {
 			grunt.log.warn('Destination not written because no source files were provided.');
 		}
@@ -96,12 +102,23 @@ module.exports = function (grunt) {
 
 				compilePhp(path.basename(file), function (response, err) {
 
-					grunt.file.write(destFile,response);
+					grunt.log.debug('processLinks: ' + options.processLinks);
+					// replace
+					if (options.processLinks) {
+						response = response.replace(/(\w)\.php([^\w])/g,'$1.html$2');
+					}
 
+					// processOutput function
+					if (options.process && typeof options.process === 'function') {
+						options.process(response,function callback(modified){
+							grunt.file.write(destFile,modified);
+						});
+					} else {
+						grunt.file.write(destFile,response);
+					}
 
 
 					if (!err) {
-
 						compiled.push(file);
 						next();
 					} else {

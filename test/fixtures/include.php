@@ -9,3 +9,4 @@
 ?>
 
 <h1>TEST</h1>
+Link: <a href="info.php">info.php</a>

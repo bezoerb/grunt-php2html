@@ -28,16 +28,16 @@ exports.php2html = {
 		done();
 	},
 
-	globbing: function (test) {
+	default: function (test) {
 		test.expect(2);
 
-		var actual = grunt.file.read('tmp/globbing/fixtures/index.html').length;
-		var expected = grunt.file.read('test/expected/index.html').length;
+		var actual = grunt.file.read('tmp/default/fixtures/index.html').replace(/[\s\r\n]/gm,'');
+		var expected = grunt.file.read('test/expected/index-replace.html').replace(/[\s\r\n]/gm,'');
 		test.equal(actual, expected, 'should show HTML content with test H1');
 
-		actual = grunt.file.read('tmp/globbing/some-other-fixtures/info.html').length;
-		expected = grunt.file.read('test/expected/info.html').length;
-		test.equal(actual, expected, 'should show HTML content from phpinfo()');
+		actual = grunt.file.read('tmp/default/some-other-fixtures/info.html').replace(/[\s\r\n]/gm,'');
+		expected = grunt.file.read('test/expected/info.html').replace(/[\s\r\n]/gm,'');
+		test.equal(actual, expected, 'should show HTML content');
 
 		test.done();
 	},
@@ -45,14 +45,25 @@ exports.php2html = {
 	'dest-as-target': function (test) {
 		test.expect(2);
 
-		var actual = grunt.file.read('tmp/dest-as-target/index.html').length;
-		var expected = grunt.file.read('test/expected/index.html').length;
+		var actual = grunt.file.read('tmp/dest-as-target/index.html').replace(/[\s\r\n]/gm,'');
+		var expected = grunt.file.read('test/expected/index.html').replace(/[\s\r\n]/gm,'');
 		test.equal(actual, expected, 'should show HTML content with test H1');
 
-		actual = grunt.file.read('tmp/dest-as-target/info.html').length;
-		expected = grunt.file.read('test/expected/info.html').length;
-		test.equal(actual, expected, 'should show HTML content from phpinfo()');
+		actual = grunt.file.read('tmp/dest-as-target/info.html').replace(/[\s\r\n]/gm,'');
+		expected = grunt.file.read('test/expected/info.html').replace(/[\s\r\n]/gm,'');
+		test.equal(actual, expected, 'should show HTML content');
 
 		test.done();
+	},
+
+	'processTest': function (test) {
+		test.expect(1);
+
+		var actual = grunt.file.read('tmp/processTest/index.html');
+		var expected = ':-)';
+		test.equal(actual, expected, 'should show :-)');
+
+		test.done();
+
 	}
 };

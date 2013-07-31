@@ -33,39 +33,36 @@ module.exports = function (grunt) {
 
 		// Configuration to be run (and then tested).
 		php2html: {
-			globbing: {
+			default: {
+				options: {
+					// relative links should be renamed from .php to .html
+					processLinks: true
+				},
 				files: [
-					{expand: true, cwd: 'test/', src: ['**/*.php'], dest: 'tmp/globbing', ext: '.html' }
+					{expand: true, cwd: 'test/', src: ['**/*.php'], dest: 'tmp/default', ext: '.html' }
 				]
 			},
 
 			'dest-as-target': {
+				options: {
+					processLinks: false
+				},
 				files: {
 					'tmp/dest-as-target/': ['test/some-other-fixtures/info.php','test/fixtures/index.php']
 				}
-			}
-
-
-
-			/*,
-
-
-			default_options: {
-				options: {
-				},
-				files: {
-					'tmp/default_options': ['test/fixtures/*.php', 'test/fixtures/123']
-				}
 			},
-			custom_options: {
+
+			'processTest': {
 				options: {
-					separator: ': ',
-					punctuation: ' !!!'
+					processLinks: false,
+					process: function(response,callback) {
+						callback(':-)');
+					}
 				},
 				files: {
-					'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
+					'tmp/processTest/': ['test/fixtures/index.php']
 				}
-			}*/
+			}
 		},
 
 		// Unit tests.
