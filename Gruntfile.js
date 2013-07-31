@@ -41,7 +41,7 @@ module.exports = function (grunt) {
 
 			'dest-as-target': {
 				files: {
-					'tmp/dest-as-target/': ['test/fixtures2/info.php','test/fixtures/index.php']
+					'tmp/dest-as-target/': ['test/some-other-fixtures/info.php','test/fixtures/index.php']
 				}
 			}
 

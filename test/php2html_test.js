@@ -35,7 +35,7 @@ exports.php2html = {
 		var expected = grunt.file.read('test/expected/index.html').length;
 		test.equal(actual, expected, 'should show HTML content with test H1');
 
-		actual = grunt.file.read('tmp/globbing/fixtures2/info.html').length;
+		actual = grunt.file.read('tmp/globbing/some-other-fixtures/info.html').length;
 		expected = grunt.file.read('test/expected/info.html').length;
 		test.equal(actual, expected, 'should show HTML content from phpinfo()');
 
