@@ -29,23 +29,11 @@ module.exports = function (grunt) {
 			grunt.log.warn('Destination not written because no source files were provided.');
 		}
 
-		var src = this.files[0].src;
-		grunt.log.debug('virtual docroot: ' + path.dirname(src));
-		middleware = gateway(path.dirname(src), {
-			'.php': 'php-cgi'
-		});
 
-		app = http.createServer(function (req, res) {
-			middleware(req, res, function (err) {
-				grunt.log.warn(err);
-				res.writeHead(204, err);
-				res.end();
-			});
-		}).listen(8888);
 
 
 		grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
-			var destFile = f.dest;
+
 
 			var files = f.src.filter(function (filepath) {
 				// Warn on and remove invalid source files (if nonull was set).
@@ -65,22 +53,56 @@ module.exports = function (grunt) {
 				// No src files, goto next target. Warn would have been issued above.
 				return nextFileObj();
 			} else {
-				grunt.log.debug(f.src + ' -> ' + destFile);
+				grunt.log.debug(f.src + ' -> ' + f.dest);
 			}
 
 			// Make sure grunt creates the destination folders
-			grunt.file.write(f.dest, '');
+			if (grunt.file.isDir(f.dest) || grunt.util._.endsWith(f.dest, '/')) {
+				grunt.log.debug(f.dest + 'is directory');
+				grunt.file.mkdir(f.dest);
+			}
 
 			var compiled = [];
 			grunt.util.async.concatSeries(files, function (file, next) {
+				var destFile = f.dest;
+
+				// check if dest is directory
+				if (grunt.file.isDir(destFile)  || grunt.util._.endsWith(f.dest, '/')) {
+					destFile = f.dest + '/' + path.basename(file,'.php') + '.html';
+					grunt.log.debug(file + ' -> ' + destFile);
+				}
+
+				// start server
+				var docroot = path.dirname(file);
+				grunt.log.debug('virtual docroot: ' + docroot);
+				middleware = gateway(docroot, {
+					'.php': 'php-cgi'
+				});
+
+				app = http.createServer(function (req, res) {
+					middleware(req, res, function (err) {
+						grunt.log.warn(err);
+						res.writeHead(204, err);
+						res.end();
+					});
+				});
+
+
+
+				// Make sure grunt creates the destination folders
+				grunt.file.write(destFile, '');
+
+				grunt.log.debug(file);
 
 				compilePhp(path.basename(file), function (response, err) {
 
-					grunt.file.write(f.dest,response);
+					grunt.file.write(destFile,response);
+
+
 
 					if (!err) {
 
-						compiled.push(f.src);
+						compiled.push(file);
 						next();
 					} else {
 						nextFileObj(err);
@@ -88,7 +110,6 @@ module.exports = function (grunt) {
 				});
 			}, function () {
 				grunt.log.debug('done');
-				app.close();
 				nextFileObj();
 			});
 
@@ -96,7 +117,10 @@ module.exports = function (grunt) {
 	});
 
 	var compilePhp = function (file, callback) {
+
+		app.listen(8888);
 		request('http://localhost:8888/' + file, function (error, response, body) {
+			app.close();
 			callback(body,error);
 		}).end();
 	};

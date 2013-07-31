@@ -33,11 +33,19 @@ module.exports = function (grunt) {
 
 		// Configuration to be run (and then tested).
 		php2html: {
-			main: {
+			globbing: {
 				files: [
-					{expand: true, cwd: 'test/fixtures/', src: ['*.php'], dest: 'tmp', ext: '.html' }
+					{expand: true, cwd: 'test/', src: ['**/*.php'], dest: 'tmp/globbing', ext: '.html' }
 				]
+			},
+
+			'dest-as-target': {
+				files: {
+					'tmp/dest-as-target/': ['test/fixtures2/info.php','test/fixtures/index.php']
+				}
 			}
+
+
 
 			/*,
 
