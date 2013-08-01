@@ -1,4 +1,4 @@
-# grunt-php2html
+# grunt-php2html ![Dependencies](https://david-dm.org/bezoerb/grunt-php2html.png)
 
 > Frontend HTML generation with PHP
 
