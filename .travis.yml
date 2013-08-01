@@ -1,8 +1,6 @@
-language: php
-php:
-  - "5.4"
+language: node_js
+node_js:
+  - 0.8
 before_install:
-  - npm install
+  - sudo apt-get install php5-cli
   - npm install -g grunt-cli
-script: grunt nodeunit   
-  
