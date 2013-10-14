@@ -10,3 +10,6 @@
 
 <h1>TEST</h1>
 Link: <a href="info.php">info.php</a>
+Link2: <a href="http://info.php">http://info.php</a>
+Link3: <a href="info.php?test=1">info.php</a>
+Link4: <img src="getmyimg.php?test=2"/>

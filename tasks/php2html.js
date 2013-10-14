@@ -7,7 +7,8 @@
  */
 'use strict';
 
-var path = require('path');
+var path = require('path'),
+	_ = require('lodash');
 
 module.exports = function (grunt) {
 
@@ -105,7 +106,16 @@ module.exports = function (grunt) {
 					grunt.log.debug('processLinks: ' + options.processLinks);
 					// replace
 					if (options.processLinks) {
-						response = response.replace(/(\w)\.php([^\w])/g,'$1.html$2');
+						_.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm),function(link){
+							if (link.match(/:\/\//)) {
+								return;
+							}
+
+							var hlink = link.replace(/(\w)\.php([^\w])/g,'$1.html$2');
+							response = response.replace(link,hlink);
+						});
+					//	response.match(/href=['"]([^'"]+)['"]/gm)
+					//	response = response.replace(/(\w)\.php([^\w])/g,'$1.html$2');
 					}
 
 					// processOutput function
