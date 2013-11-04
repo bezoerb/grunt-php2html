@@ -31,6 +31,7 @@ brew install php54
 ## The "php2html" task
 
 ### Overview
+Use this grunt plugin to compile php files to static html.
 In your project's Gruntfile, add a section named `php2html` to the data object passed into `grunt.initConfig()`.
 
 ```js
@@ -48,12 +49,14 @@ grunt.initConfig({
 
 ### Options
 
-// relative links should be renamed from .php to .html
+      // relative links should be renamed from .php to .html
 	  processLinks: true,
 	  // some function to process the output 
 	  process: function(response,callback) {
 	  	callback(':-)');
-	  }
+	  },
+	  htmlhint: {},
+	  htmlhintrc: .htmlhintrc
 
 
 #### options.processLinks
@@ -67,7 +70,38 @@ Type: `Function`
 Params: `String` Response text, `Function` Callback function
 Default value: `undefined`
 
-Implement your own response parser and return the processed respobnse back to the task
+Implement your own response parser and return the processed response back to the task
+
+#### options.htmlhint
+Type: `Object`
+
+Pass a list of [rules](https://github.com/yaniswang/HTMLHint/wiki/Rules)  for linting the compiled HTML.
+
+If rules is undefined, it will use default ruleset:
+```
+{
+    'tagname-lowercase': true,
+    'attr-lowercase': true,
+    'attr-value-double-quotes': true,
+    'doctype-first': true,
+    'tag-pair': true,
+    'spec-char-escape': true,
+    'id-unique': true,
+    'src-not-empty': true
+}
+```
+
+#### options.htmlhintrc
+Type: `String`
+Default value: `null`
+
+If this filename is specified, options and globals defined therein will be used. Task and target options override the options within the `htmlhintrc` file. The `htmlhintrc` file must be valid JSON and looks something like this:
+
+```json
+{
+  "tag-pair": true,
+}
+```
 
 ### Usage Examples
 
@@ -94,8 +128,7 @@ grunt.initConfig({
 ```
 
 
-## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
-
 ## Release History
-_(Nothing yet)_
+ * 2013-11-04   v0.1.5   Added HTMLHint support
+ * 2013-08-09   v0.1.4   First release
+ 

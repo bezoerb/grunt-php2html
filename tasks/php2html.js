@@ -25,12 +25,28 @@ module.exports = function (grunt) {
 	grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function () {
 
 		var cb = this.async();
+		var HTMLHint  = require("htmlhint").HTMLHint;
 
 		var options = this.options({
 			processLinks: true,
-			process: false
+			process: false,
+			htmlhint: undefined
 		});
 
+		if (options.htmlhintrc) {
+			var rc = grunt.file.readJSON(options.htmlhintrc);
+			grunt.util._.defaults(options.htmlhint, rc);
+			delete options.htmlhintrc;
+		}
+
+		// htmllint only checks for rulekey, so remove rule if set to false
+		if (typeof options.htmlhint !== 'undefined') {
+			for (var i in options.htmlhint) {
+				if (!options.htmlhint[i]) {
+					delete options.htmlhint[i];
+				}
+			}
+		}
 
 		if (this.files.length < 1) {
 			grunt.log.warn('Destination not written because no source files were provided.');
@@ -99,7 +115,8 @@ module.exports = function (grunt) {
 				// Make sure grunt creates the destination folders
 				grunt.file.write(destFile, '');
 
-				grunt.log.debug(file);
+				grunt.log.write('Processing ' + path.basename(file)+'...');
+
 
 				compilePhp(path.basename(file), function (response, err) {
 
@@ -114,8 +131,6 @@ module.exports = function (grunt) {
 							var hlink = link.replace(/(\w)\.php([^\w])/g,'$1.html$2');
 							response = response.replace(link,hlink);
 						});
-					//	response.match(/href=['"]([^'"]+)['"]/gm)
-					//	response = response.replace(/(\w)\.php([^\w])/g,'$1.html$2');
 					}
 
 					// processOutput function
@@ -128,10 +143,30 @@ module.exports = function (grunt) {
 					}
 
 
-					if (!err) {
+
+					var messages = HTMLHint.verify(response, options.htmlhint);
+
+					if (!err && messages.length === 0) {
+						grunt.log.ok();
 						compiled.push(file);
 						next();
 					} else {
+						grunt.log.error();
+
+						messages.forEach(function( message ) {
+							grunt.log.writeln( "[".red + ( "L" + message.line ).yellow + ":".red + ( "C" + message.col ).yellow + "]".red + ' ' + message.message.yellow );
+							var evidence = message.evidence,
+								col = message.col;
+							if (col === 0) {
+								evidence = '?'.inverse.red + evidence;
+							} else if (col > evidence.length) {
+								evidence = evidence + ' '.inverse.red;
+							} else {
+								evidence = evidence.slice(0, col - 1) + evidence[col - 1].inverse.red + evidence.slice(col);
+							}
+							grunt.log.writeln(evidence);
+						});
+
 						nextFileObj(err);
 					}
 				});

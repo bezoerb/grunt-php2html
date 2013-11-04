@@ -9,6 +9,11 @@
 
 module.exports = function (grunt) {
 
+	// show elapsed time at the end
+	require('time-grunt')(grunt);
+	// load all grunt tasks
+	require('load-grunt-tasks')(grunt);
+
 	// Make an empty dir for testing as git doesn't track empty folders.
 	//grunt.file.mkdir('test/fixtures/empty_folder');
 	//grunt.file.mkdir('test/expected/copy_test_mix/empty_folder');
@@ -36,7 +41,10 @@ module.exports = function (grunt) {
 			default: {
 				options: {
 					// relative links should be renamed from .php to .html
-					processLinks: true
+					processLinks: true,
+					htmlhint: {
+						'doctype-first': false
+					}
 				},
 				files: [
 					{expand: true, cwd: 'test/', src: ['**/*.php'], dest: 'tmp/default', ext: '.html' }
@@ -45,7 +53,10 @@ module.exports = function (grunt) {
 
 			'dest-as-target': {
 				options: {
-					processLinks: false
+					processLinks: false,
+					htmlhint: {
+						'doctype-first': false
+					}
 				},
 				files: {
 					'tmp/dest-as-target/': ['test/some-other-fixtures/info.php','test/fixtures/index.php']
@@ -55,6 +66,9 @@ module.exports = function (grunt) {
 			'processTest': {
 				options: {
 					processLinks: false,
+					htmlhint: {
+						'doctype-first': false
+					},
 					process: function(response,callback) {
 						callback(':-)');
 					}
@@ -75,10 +89,6 @@ module.exports = function (grunt) {
 	// Actually load this plugin's task(s).
 	grunt.loadTasks('tasks');
 
-	// These plugins provide necessary tasks.
-	grunt.loadNpmTasks('grunt-contrib-jshint');
-	grunt.loadNpmTasks('grunt-contrib-clean');
-	grunt.loadNpmTasks('grunt-contrib-nodeunit');
 
 	// Whenever the "test" task is run, first clean the "tmp" dir, then run this
 	// plugin's task(s), then test the result.
