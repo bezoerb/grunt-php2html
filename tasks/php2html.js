@@ -55,8 +55,9 @@ module.exports = function (grunt) {
 
 
 
-		grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
 
+		grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
+			var dest = f.dest;
 
 			var files = f.src.filter(function (filepath) {
 				// Warn on and remove invalid source files (if nonull was set).
@@ -80,24 +81,22 @@ module.exports = function (grunt) {
 			}
 
 			// Make sure grunt creates the destination folders
-			if (grunt.file.isDir(f.dest) || grunt.util._.endsWith(f.dest, '/')) {
-				grunt.log.debug(f.dest + 'is directory');
-				grunt.file.mkdir(f.dest);
+			if (!grunt.file.isDir(dest) && detectDestType(dest) === 'directory') {
+				grunt.log.debug('Create directory ' + path.normalize(f.dest));
+				grunt.file.mkdir(dest);
 			}
 
 			var compiled = [];
 			grunt.util.async.concatSeries(files, function (file, next) {
-				var destFile = f.dest;
+				dest = f.dest;
 
 				// check if dest is directory
-				if (grunt.file.isDir(destFile)  || grunt.util._.endsWith(f.dest, '/')) {
-					destFile = f.dest + '/' + path.basename(file,'.php') + '.html';
-					grunt.log.debug(file + ' -> ' + destFile);
+				if (grunt.file.isDir(dest)  || detectDestType(dest) === 'directory') {
+					dest = path.join(f.dest,path.basename(file,'.php') + '.html');
 				}
 
 				// start server
-				var docroot = path.dirname(file);
-				grunt.log.debug('virtual docroot: ' + docroot);
+				var docroot = path.normalize(path.dirname(file));
 				middleware = gateway(docroot, {
 					'.php': 'php-cgi'
 				});
@@ -113,21 +112,19 @@ module.exports = function (grunt) {
 
 
 				// Make sure grunt creates the destination folders
-				grunt.file.write(destFile, '');
+				grunt.file.write(dest, '');
 
 				grunt.log.write('Processing ' + path.basename(file)+'...');
 
 
 				compilePhp(path.basename(file), function (response, err) {
 
-					grunt.log.debug('processLinks: ' + options.processLinks);
 					// replace
 					if (options.processLinks) {
 						_.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm),function(link){
 							if (link.match(/:\/\//)) {
 								return;
 							}
-
 							var hlink = link.replace(/(\w)\.php([^\w])/g,'$1.html$2');
 							response = response.replace(link,hlink);
 						});
@@ -136,18 +133,17 @@ module.exports = function (grunt) {
 					// processOutput function
 					if (options.process && typeof options.process === 'function') {
 						options.process(response,function callback(modified){
-							grunt.file.write(destFile,modified);
+							grunt.file.write(dest,modified);
 						});
 					} else {
-						grunt.file.write(destFile,response);
+						grunt.file.write(dest,response);
 					}
-
-
 
 					var messages = HTMLHint.verify(response, options.htmlhint);
 
 					if (!err && messages.length === 0) {
 						grunt.log.ok();
+						grunt.log.debug(dest + ' written');
 						compiled.push(file);
 						next();
 					} else {
@@ -186,6 +182,15 @@ module.exports = function (grunt) {
 			callback(body,error);
 		}).end();
 	};
+
+	var detectDestType = function(dest) {
+		if (grunt.util._.endsWith(dest, '/') || grunt.util._.endsWith(dest, '\\')) {
+			return 'directory';
+		} else {
+			return 'file';
+		}
+	};
+
 
 
 };
