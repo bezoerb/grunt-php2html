@@ -17,7 +17,11 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-php2html');
 ```
 
+To make this work you need the `php-cgi` binaray in your PATH.
+
 ### Installing php-cgi
+
+##### OSX
 
 The `php-cgi` binary can be installed via Homebrew by tapping the
 [homebrew-php](https://github.com/josegonzalez/homebrew-php) repository:
@@ -27,6 +31,11 @@ brew tap homebrew/dupes
 brew tap josegonzalez/homebrew-php
 brew install php54
 ```
+
+##### Windows
+
+The `php-cgi` binary can be installed via [XAMPP](http://www.apachefriends.org/de/xampp-windows.html).
+
 
 ## The "php2html" task
 
@@ -129,6 +138,7 @@ grunt.initConfig({
 
 
 ## Release History
+ * 2013-11-07   v0.1.6   Fixed some path issues on windows
  * 2013-11-04   v0.1.5   Added HTMLHint support
  * 2013-08-09   v0.1.4   First release
  
