@@ -8,7 +8,8 @@
 'use strict';
 
 var path = require('path'),
-	_ = require('lodash');
+	_ = require('lodash'),
+	win32 = process.platform === 'win32';
 
 module.exports = function (grunt) {
 
@@ -138,6 +139,7 @@ module.exports = function (grunt) {
 
 				// start server with php middleware
 				app = http.createServer(function (req, res) {
+					// Pass the request to gateway middleware
 					middleware(req, res, function (err) {
 						grunt.log.warn(err);
 						res.writeHead(204, err);
@@ -151,7 +153,7 @@ module.exports = function (grunt) {
 				compilePhp(uri, function (response, err) {
 
 					// replace relative php links with corresponding html link
-					if (options.processLinks) {
+					if (response && options.processLinks) {
 						_.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm),function(link){
 							if (link.match(/:\/\//)) {
 								return;
@@ -164,8 +166,8 @@ module.exports = function (grunt) {
 					// doeas the last part of the job
 					var finish = function(target,response,cb){
 						// Lint generated html and check if response is  empty
-						var messages = HTMLHint.verify(response, options.htmlhint),
-							empty = response === '';
+						var messages = HTMLHint.verify(response || '', options.htmlhint),
+							empty = typeof response === 'undefined' || response === '';
 
 						// move on to the next file if everything went right
 						if (!err && messages.length === 0 && !empty) {
@@ -254,7 +256,7 @@ module.exports = function (grunt) {
 	 * @returns {string}
 	 */
 	var computeUri = function(docroot,file) {
-
+		var uri;
 		// If file ends with a slash apend index file
 		if (file[file.length-1] === '/' || grunt.file.isDir(file)) {
 			file = path.join(file,'index.php');
@@ -265,7 +267,19 @@ module.exports = function (grunt) {
 			file = path.join(process.cwd(),file);
 		}
 
-		return file.replace(docroot,'');
+		if (win32) {
+			// use the correct slashes for uri
+			uri = file.replace(docroot,'').replace(/[\\]/g,'/');
+		} else {
+			uri = file.replace(docroot,'');
+		}
+
+		// ensure that we have an absolute url
+		if (uri.substr(0,1) !== '/') {
+			uri = '/'+uri;
+		}
+
+		return uri;
 	};
 
 
