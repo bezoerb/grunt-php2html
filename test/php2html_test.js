@@ -1,6 +1,7 @@
 'use strict';
 
-var grunt = require('grunt');
+var grunt = require('grunt'),
+	path = require('path');
 
 /*
  ======== A Handy Little Nodeunit Reference ========
@@ -31,12 +32,12 @@ exports.php2html = {
 	default: function (test) {
 		test.expect(2);
 
-		var actual = grunt.file.read('tmp/default/fixtures/index.html').replace(/[\s\r\n]/gm,'');
-		var expected = grunt.file.read('test/expected/index-replace.html').replace(/[\s\r\n]/gm,'');
+		var actual = grunt.file.read('tmp/default/fixtures/index.html').replace(/[\s\r\n]/gm, '');
+		var expected = grunt.file.read('test/expected/index-replace.html').replace(/[\s\r\n]/gm, '');
 		test.equal(actual, expected, 'should show HTML content with test H1');
 
-		actual = grunt.file.read('tmp/default/some-other-fixtures/info.html').replace(/[\s\r\n]/gm,'');
-		expected = grunt.file.read('test/expected/info.html').replace(/[\s\r\n]/gm,'');
+		actual = grunt.file.read('tmp/default/some-other-fixtures/info.html').replace(/[\s\r\n]/gm, '');
+		expected = grunt.file.read('test/expected/info.html').replace(/[\s\r\n]/gm, '');
 		test.equal(actual, expected, 'should show HTML content');
 
 		test.done();
@@ -45,15 +46,25 @@ exports.php2html = {
 	'dest-as-target': function (test) {
 		test.expect(2);
 
-		var actual = grunt.file.read('tmp/dest-as-target/index.html').replace(/[\s\r\n]/gm,'');
-		var expected = grunt.file.read('test/expected/index.html').replace(/[\s\r\n]/gm,'');
+		var actual = grunt.file.read('tmp/dest-as-target/index.html').replace(/[\s\r\n]/gm, '');
+		var expected = grunt.file.read('test/expected/index.html').replace(/[\s\r\n]/gm, '');
 		test.equal(actual, expected, 'should show HTML content with test H1');
 
-		actual = grunt.file.read('tmp/dest-as-target/info.html').replace(/[\s\r\n]/gm,'');
-		expected = grunt.file.read('test/expected/info.html').replace(/[\s\r\n]/gm,'');
+		actual = grunt.file.read('tmp/dest-as-target/info.html').replace(/[\s\r\n]/gm, '');
+		expected = grunt.file.read('test/expected/info.html').replace(/[\s\r\n]/gm, '');
 		test.equal(actual, expected, 'should show HTML content');
 
 		test.done();
+	},
+
+	'first-error': function (test) {
+		test.expect(2);
+
+		test.equal(grunt.file.exists('tmp/only-index/error.html'), false, 'file should NOT be created on error.');
+		test.equal(grunt.file.exists('tmp/only-index/index.html'), true, 'index file should be created even if first processed file is gets error');
+
+		test.done();
+
 	},
 
 	'processTest': function (test) {
@@ -65,5 +76,15 @@ exports.php2html = {
 
 		test.done();
 
+	},
+
+	'environment': function (test) {
+		test.expect(5);
+		test.equal(grunt.file.read('tmp/test/env/DOCUMENT_ROOT.html'), process.cwd(), 'DOCUMENT_ROOT should be cwd()');
+		test.equal(grunt.file.read('tmp/test/env/PHP_SELF.html'), path.normalize('/test/env/PHP_SELF.php'), 'PHP_SELF schould be relative script path');
+		test.equal(grunt.file.read('tmp/test/env/REQUEST_URI.html'), path.normalize('/test/env/REQUEST_URI.php'), 'REQUEST_URI schould be relative script path');
+		test.equal(grunt.file.read('tmp/test/env/SCRIPT_NAME.html'), path.normalize('/test/env/SCRIPT_NAME.php'), 'SCRIPT_NAME schould be relative script path');
+		test.equal(grunt.file.read('tmp/test/env/SCRIPT_FILENAME.html'), path.join(process.cwd(),'test/env/SCRIPT_FILENAME.php'), 'SCRIPT_FILENAME schould be absolute script path');
+		test.done();
 	}
 };

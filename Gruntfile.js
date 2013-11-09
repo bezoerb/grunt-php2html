@@ -13,11 +13,7 @@ module.exports = function (grunt) {
 	require('time-grunt')(grunt);
 	// load all grunt tasks
 	require('load-grunt-tasks')(grunt);
-
-	// Make an empty dir for testing as git doesn't track empty folders.
-	//grunt.file.mkdir('test/fixtures/empty_folder');
-	//grunt.file.mkdir('test/expected/copy_test_mix/empty_folder');
-
+	
 	// Project configuration.
 	grunt.initConfig({
 		jshint: {
@@ -42,33 +38,50 @@ module.exports = function (grunt) {
 				options: {
 					// relative links should be renamed from .php to .html
 					processLinks: true,
-					htmlhint: {
-						'doctype-first': false
-					}
+					htmlhint: {}
 				},
 				files: [
-					{expand: true, cwd: 'test/', src: ['**/*.php'], dest: 'tmp/default', ext: '.html' }
+					{expand: true, cwd: 'test/', src: ['**/*.php','!fixtures/error.php','!env/*.php'], dest: 'tmp/default', ext: '.html' }
 				]
 			},
 
 			'dest-as-target': {
 				options: {
 					processLinks: false,
-					htmlhint: {
-						'doctype-first': false
-					}
+					htmlhint: {},
+					docroot: 'test'
 				},
 				files: {
 					'tmp/dest-as-target/': ['test/some-other-fixtures/info.php','test/fixtures/index.php']
 				}
 			},
 
-			'processTest': {
+			'first-error': {
 				options: {
 					processLinks: false,
 					htmlhint: {
-						'doctype-first': false
-					},
+						'tag-pair': true
+					}
+				},
+				files: {
+					'tmp/only-index/': ['test/fixtures/error.php','test/fixtures/index.php']
+				}
+			},
+
+			'environment': {
+				options: {
+					htmlhint: {}
+				},
+				files: [
+					{expand: true, cwd: './', src: ['test/env/*.php'], dest: 'tmp/', ext: '.html' }
+				]
+
+			},
+
+			'processTest': {
+				options: {
+					processLinks: false,
+					htmlhint: {},
 					process: function(response,callback) {
 						callback(':-)');
 					}
@@ -92,7 +105,7 @@ module.exports = function (grunt) {
 
 	// Whenever the "test" task is run, first clean the "tmp" dir, then run this
 	// plugin's task(s), then test the result.
-	grunt.registerTask('test', ['clean', 'php2html', 'nodeunit']);
+	grunt.registerTask('test', ['clean', 'php2html', 'nodeunit', 'clean']);
 
 	// By default, lint and run all tests.
 	grunt.registerTask('default', ['jshint', 'test']);

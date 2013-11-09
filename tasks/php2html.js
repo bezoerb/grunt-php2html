@@ -14,31 +14,41 @@ module.exports = function (grunt) {
 
 	var path = require('path'),
 		http = require('http'),
+		HTMLHint  = require("htmlhint").HTMLHint,
 		request = require('request'),
 		gateway = require('gateway'),
 		app,middleware;
 
 
+
 	// Please see the Grunt documentation for more information regarding task
 	// creation: http://gruntjs.com/creating-tasks
-
 	grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function () {
 
-		var cb = this.async();
-		var HTMLHint  = require("htmlhint").HTMLHint;
+		var cb = this.async(),
+			compiled = [],
+			targetDirectory,
+			options = this.options({
+				processLinks: true,
+				process: false,
+				htmlhint: undefined,
+				docroot: undefined
+			});
 
-		var options = this.options({
-			processLinks: true,
-			process: false,
-			htmlhint: undefined
-		});
+		// nothing to do
+		if (this.files.length < 1) {
+			grunt.log.warn('Destination not written because no source files were provided.');
+			return;
+		}
 
+		// read config file for htmlhint if available
 		if (options.htmlhintrc) {
 			var rc = grunt.file.readJSON(options.htmlhintrc);
 			grunt.util._.defaults(options.htmlhint, rc);
 			delete options.htmlhintrc;
 		}
 
+		// normalize htmlhint options
 		// htmllint only checks for rulekey, so remove rule if set to false
 		if (typeof options.htmlhint !== 'undefined') {
 			for (var i in options.htmlhint) {
@@ -48,19 +58,29 @@ module.exports = function (grunt) {
 			}
 		}
 
-		if (this.files.length < 1) {
-			grunt.log.warn('Destination not written because no source files were provided.');
-		}
-
-
-
-
-
+		// Loop files array
 		grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
-			var dest = f.dest;
+			// try to get docroot
+			// first: docroot from options
+			// third: use process cwd
+			var docroot = path.normalize(options.docroot || f.orig.cwd || process.cwd());
 
+			// check docroot
+			if (!grunt.file.exists(docroot)) {
+				grunt.log.warn('Docroot "' + docroot + '" does not exist');
+				return nextFileObj();
+			}
+
+			// absolutize docroot
+			if (!grunt.file.isPathAbsolute(docroot)) {
+				docroot = path.normalize(path.join(process.cwd(),docroot));
+			}
+
+			// remove trailing slash
+			docroot = docroot.replace(/\/$/,'');
+
+			// Warn on and remove invalid source files (if nnull was set).
 			var files = f.src.filter(function (filepath) {
-				// Warn on and remove invalid source files (if nonull was set).
 				if (!grunt.file.exists(filepath)) {
 					grunt.log.warn('Source file "' + filepath + '" not found.');
 					return false;
@@ -69,38 +89,54 @@ module.exports = function (grunt) {
 				}
 			});
 
+			// check files
 			if (files.length === 0) {
-				if (f.src.length < 1) {
-					grunt.log.warn('Destination not written because no source files were found.');
-				}
+				grunt.log.warn('Destination not written because no source files were found.');
 
 				// No src files, goto next target. Warn would have been issued above.
 				return nextFileObj();
+			}
+
+			// check if dest is directory
+			if (detectDestType(f.dest) === 'directory') {
+				targetDirectory = path.normalize(f.dest);
 			} else {
-				grunt.log.debug(f.src + ' -> ' + f.dest);
+				targetDirectory = path.dirname(f.dest);
 			}
 
-			// Make sure grunt creates the destination folders
-			if (!grunt.file.isDir(dest) && detectDestType(dest) === 'directory') {
-				grunt.log.debug('Create directory ' + path.normalize(f.dest));
-				grunt.file.mkdir(dest);
+			// make shure dest directory exists
+			if (!grunt.file.isDir(targetDirectory)) {
+				grunt.file.mkdir(targetDirectory);
 			}
 
-			var compiled = [];
 			grunt.util.async.concatSeries(files, function (file, next) {
-				dest = f.dest;
+				var target,uri = computeUri(docroot,file);
 
-				// check if dest is directory
-				if (grunt.file.isDir(dest)  || detectDestType(dest) === 'directory') {
-					dest = path.join(f.dest,path.basename(file,'.php') + '.html');
+				// check if uri exists
+				if (!grunt.file.exists(path.join(docroot,uri))) {
+					grunt.log.warn('Source file not found: ',uri);
+					return;
 				}
 
+				// compute target filename
+				if (detectDestType(f.dest) === 'directory') {
+					target = path.join(targetDirectory,path.basename(uri,'.php') + '.html');
+				} else {
+					target = path.join(targetDirectory,path.basename(f.dest));
+				}
+
+				grunt.log.debug('----------------------------------');
+				grunt.log.debug('docroot: ',docroot);
+				grunt.log.debug('uri',uri);
+				grunt.log.debug('target',target);
+				grunt.log.debug('----------------------------------');
+
 				// start server
-				var docroot = path.normalize(path.dirname(file));
 				middleware = gateway(docroot, {
 					'.php': 'php-cgi'
 				});
 
+				// start server with php middleware
 				app = http.createServer(function (req, res) {
 					middleware(req, res, function (err) {
 						grunt.log.warn(err);
@@ -109,17 +145,12 @@ module.exports = function (grunt) {
 					});
 				});
 
+				grunt.log.write('Processing ' + file +'...');
 
 
-				// Make sure grunt creates the destination folders
-				grunt.file.write(dest, '');
+				compilePhp(uri, function (response, err) {
 
-				grunt.log.write('Processing ' + path.basename(file)+'...');
-
-
-				compilePhp(path.basename(file), function (response, err) {
-
-					// replace
+					// replace relative php links with corresponding html link
 					if (options.processLinks) {
 						_.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm),function(link){
 							if (link.match(/:\/\//)) {
@@ -130,41 +161,56 @@ module.exports = function (grunt) {
 						});
 					}
 
+					// doeas the last part of the job
+					var finish = function(target,response,cb){
+						// Lint generated html and check if response is  empty
+						var messages = HTMLHint.verify(response, options.htmlhint),
+							empty = response === '';
+
+						// move on to the next file if everything went right
+						if (!err && messages.length === 0 && !empty) {
+							grunt.file.write(target,response);
+							grunt.log.ok();
+							grunt.log.debug(target + ' written');
+							compiled.push(file);
+
+						// there was an error, show messages to the user if applicable and move on
+						} else {
+							grunt.log.error();
+
+							if (empty) {
+								grunt.log.warn('Resulting HTML is empty');
+							}
+
+
+							// output messages
+							messages.forEach(function( message ) {
+								grunt.log.writeln( "[".red + ( "L" + message.line ).yellow + ":".red + ( "C" + message.col ).yellow + "]".red + ' ' + message.message.yellow );
+								var evidence = message.evidence,
+									col = message.col;
+								if (col === 0) {
+									evidence = '?'.inverse.red + evidence;
+								} else if (col > evidence.length) {
+									evidence = evidence + ' '.inverse.red;
+								} else {
+									evidence = evidence.slice(0, col - 1) + evidence[col - 1].inverse.red + evidence.slice(col);
+								}
+
+							});
+						}
+
+						cb();
+					};
+
 					// processOutput function
 					if (options.process && typeof options.process === 'function') {
 						options.process(response,function callback(modified){
-							grunt.file.write(dest,modified);
+							finish(target,modified,next);
 						});
 					} else {
-						grunt.file.write(dest,response);
+						finish(target,response,next);
 					}
 
-					var messages = HTMLHint.verify(response, options.htmlhint);
-
-					if (!err && messages.length === 0) {
-						grunt.log.ok();
-						grunt.log.debug(dest + ' written');
-						compiled.push(file);
-						next();
-					} else {
-						grunt.log.error();
-
-						messages.forEach(function( message ) {
-							grunt.log.writeln( "[".red + ( "L" + message.line ).yellow + ":".red + ( "C" + message.col ).yellow + "]".red + ' ' + message.message.yellow );
-							var evidence = message.evidence,
-								col = message.col;
-							if (col === 0) {
-								evidence = '?'.inverse.red + evidence;
-							} else if (col > evidence.length) {
-								evidence = evidence + ' '.inverse.red;
-							} else {
-								evidence = evidence.slice(0, col - 1) + evidence[col - 1].inverse.red + evidence.slice(col);
-							}
-							grunt.log.writeln(evidence);
-						});
-
-						nextFileObj(err);
-					}
 				});
 			}, function () {
 				grunt.log.debug('done');
@@ -174,21 +220,52 @@ module.exports = function (grunt) {
 		}, cb);
 	});
 
-	var compilePhp = function (file, callback) {
-
+	/**
+	 * Use server with gateway middleware to generate html for the given source
+	 * @param {string} uri
+	 * @param {function} callback
+	 */
+	var compilePhp = function (uri, callback) {
 		app.listen(8888);
-		request('http://localhost:8888/' + file, function (error, response, body) {
+		request('http://localhost:8888' + uri, function (error, response, body) {
 			app.close();
 			callback(body,error);
 		}).end();
 	};
 
+	/**
+	 * Get type of destination path
+	 * @param {string} dest
+	 * @returns {string} directory|file
+	 */
 	var detectDestType = function(dest) {
 		if (grunt.util._.endsWith(dest, '/') || grunt.util._.endsWith(dest, '\\')) {
 			return 'directory';
 		} else {
 			return 'file';
 		}
+	};
+
+
+	/**
+	 * Compute URI for gateway relative to docroot
+	 * @param {string} docroot
+	 * @param {sting} file
+	 * @returns {string}
+	 */
+	var computeUri = function(docroot,file) {
+
+		// If file ends with a slash apend index file
+		if (file[file.length-1] === '/' || grunt.file.isDir(file)) {
+			file = path.join(file,'index.php');
+		}
+
+		// absolutize filepath
+		if (!grunt.file.isPathAbsolute(path.dirname(file))) {
+			file = path.join(process.cwd(),file);
+		}
+
+		return file.replace(docroot,'');
 	};
 
 
