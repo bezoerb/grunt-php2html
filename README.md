@@ -66,7 +66,7 @@ grunt.initConfig({
 	  },
 	  htmlhint: {},
 	  htmlhintrc: .htmlhintrc,
-	  docroot: mydocroot relatove to cwd
+	  docroot: <mydocroot relative to Gruntfile.js>
 
 
 #### options.processLinks
@@ -117,7 +117,7 @@ If this filename is specified, options and globals defined therein will be used.
 Type: `String`
 Default value: process.cwd()
 
-Specify a docroot for php parsing. All php files will be parsed relative to this directory.
+Specify a docroot for the php Server. All php files will be served relative to this directory.
 
 
 ### Usage Examples
@@ -146,6 +146,7 @@ grunt.initConfig({
 
 
 ## Release History
+ * 2013-11-09   v0.1.7   Added docroot option
  * 2013-11-07   v0.1.6   Fixed some path issues on windows
  * 2013-11-04   v0.1.5   Added HTMLHint support
  * 2013-08-09   v0.1.4   First release
