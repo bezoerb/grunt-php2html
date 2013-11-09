@@ -65,7 +65,8 @@ grunt.initConfig({
 	  	callback(':-)');
 	  },
 	  htmlhint: {},
-	  htmlhintrc: .htmlhintrc
+	  htmlhintrc: .htmlhintrc,
+	  docroot: mydocroot relatove to cwd
 
 
 #### options.processLinks
@@ -111,6 +112,13 @@ If this filename is specified, options and globals defined therein will be used.
   "tag-pair": true,
 }
 ```
+
+#### options.docroot
+Type: `String`
+Default value: process.cwd()
+
+Specify a docroot for php parsing. All php files will be parsed relative to this directory.
+
 
 ### Usage Examples
 
