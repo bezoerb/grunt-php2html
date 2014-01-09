@@ -36,6 +36,11 @@ brew install php54
 
 The `php-cgi` binary can be installed via [XAMPP](http://www.apachefriends.org/de/xampp-windows.html).
 
+##### Ubuntu
+
+```shell
+sudo apt-get install php5-cgi
+```
 
 ## The "php2html" task
 
