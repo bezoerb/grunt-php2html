@@ -33,7 +33,8 @@ module.exports = function (grunt) {
 				processLinks: true,
 				process: false,
 				htmlhint: undefined,
-				docroot: undefined
+				docroot: undefined,
+				serverPort: 8888
 			});
 
 		// nothing to do
@@ -150,7 +151,7 @@ module.exports = function (grunt) {
 				grunt.log.write('Processing ' + file +'...');
 
 
-				compilePhp(uri, function (response, err) {
+				compilePhp(options.serverPort, uri, function (response, err) {
 
 					// replace relative php links with corresponding html link
 					if (response && options.processLinks) {
@@ -224,12 +225,13 @@ module.exports = function (grunt) {
 
 	/**
 	 * Use server with gateway middleware to generate html for the given source
+	 * @param {int} port
 	 * @param {string} uri
 	 * @param {function} callback
 	 */
-	var compilePhp = function (uri, callback) {
-		app.listen(8888);
-		request('http://localhost:8888' + uri, function (error, response, body) {
+	var compilePhp = function (port, uri, callback) {
+		app.listen(port);
+		request('http://localhost:'+ port + uri, function (error, response, body) {
 			app.close();
 			callback(body,error);
 		}).end();

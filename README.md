@@ -125,6 +125,12 @@ Default value: process.cwd()
 
 Specify a docroot for the php Server. All php files will be served relative to this directory.
 
+#### options.serverPort
+Type: `Int`
+Default value: `8888`
+
+Specify a port for the php Server.
+
 
 ### Usage Examples
 
