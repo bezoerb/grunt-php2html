@@ -9,6 +9,7 @@
 
 var path = require('path'),
 	_ = require('lodash'),
+    fs = require('fs'),
 	win32 = process.platform === 'win32';
 
 module.exports = function (grunt) {
@@ -18,8 +19,22 @@ module.exports = function (grunt) {
 		HTMLHint  = require("htmlhint").HTMLHint,
 		request = require('request'),
 		gateway = require('gateway'),
+        compiled = [],
 		app,middleware;
 
+    // unlink generated html files
+    // usefull if the files get copied and processed later
+    grunt.registerMultiTask('php2htmlUnlink', 'Unlink generated HTML', function () {
+        grunt.log.ok('removing generated files...');
+        compiled.forEach(function (file) {
+            fs.unlink(file,function(err) {
+                if (err) {
+                    grunt.log.warn(err);
+                }
+            });
+
+        });
+    });
 
 
 	// Please see the Grunt documentation for more information regarding task
@@ -27,7 +42,6 @@ module.exports = function (grunt) {
 	grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function () {
 
 		var cb = this.async(),
-			compiled = [],
 			targetDirectory,
 			options = this.options({
 				processLinks: true,
@@ -175,7 +189,7 @@ module.exports = function (grunt) {
 							grunt.file.write(target,response);
 							grunt.log.ok();
 							grunt.log.debug(target + ' written');
-							compiled.push(file);
+							compiled.push(target);
 
 						// there was an error, show messages to the user if applicable and move on
 						} else {
@@ -222,6 +236,7 @@ module.exports = function (grunt) {
 
 		}, cb);
 	});
+
 
 	/**
 	 * Use server with gateway middleware to generate html for the given source
