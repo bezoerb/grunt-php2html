@@ -73,6 +73,7 @@ grunt.initConfig({
 	  htmlhint: {},
 	  htmlhintrc: .htmlhintrc,
 	  docroot: <mydocroot relative to Gruntfile.js>
+      getData: {'key': 'value'}
 
 
 #### options.processLinks
@@ -131,6 +132,11 @@ Default value: `8888`
 
 Specify a port for the php Server.
 
+#### options.getData
+Type: `Object`
+Default value: `{}`
+
+Pass data to php file using $_GET.
 
 ### Usage Examples
 
@@ -158,6 +164,7 @@ grunt.initConfig({
 
 
 ## Release History
+ * 2014-25-04   v0.1.10  Added getData option to pass variables to php script
  * 2013-11-09   v0.1.7   Added docroot option
  * 2013-11-07   v0.1.6   Fixed some path issues on windows
  * 2013-11-04   v0.1.5   Added HTMLHint support
