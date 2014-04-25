@@ -8,26 +8,27 @@
 'use strict';
 
 var path = require('path'),
-	_ = require('lodash'),
+    _ = require('lodash'),
     fs = require('fs'),
-	win32 = process.platform === 'win32';
+    qs = require('qs'),
+    win32 = process.platform === 'win32';
 
-module.exports = function (grunt) {
+module.exports = function(grunt) {
 
-	var path = require('path'),
-		http = require('http'),
-		HTMLHint  = require("htmlhint").HTMLHint,
-		request = require('request'),
-		gateway = require('gateway'),
+    var path = require('path'),
+        http = require('http'),
+        HTMLHint = require("htmlhint").HTMLHint,
+        request = require('request'),
+        gateway = require('gateway'),
         compiled = [],
-		app,middleware;
+        app, middleware;
 
     // unlink generated html files
     // usefull if the files get copied and processed later
-    grunt.registerMultiTask('php2htmlUnlink', 'Unlink generated HTML', function () {
+    grunt.registerMultiTask('php2htmlUnlink', 'Unlink generated HTML', function() {
         grunt.log.ok('removing generated files...');
-        compiled.forEach(function (file) {
-            fs.unlink(file,function(err) {
+        compiled.forEach(function(file) {
+            fs.unlink(file, function(err) {
                 if (err) {
                     grunt.log.warn(err);
                 }
@@ -37,268 +38,282 @@ module.exports = function (grunt) {
     });
 
 
-	// Please see the Grunt documentation for more information regarding task
-	// creation: http://gruntjs.com/creating-tasks
-	grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function () {
+    // Please see the Grunt documentation for more information regarding task
+    // creation: http://gruntjs.com/creating-tasks
+    grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function() {
 
-		var cb = this.async(),
-			targetDirectory,
-			options = this.options({
-				processLinks: true,
-				process: false,
-				htmlhint: undefined,
-				docroot: undefined,
-				serverPort: 8888
-			});
+        var cb = this.async(),
+            targetDirectory,
+            queryString = '',
+            options = this.options({
+                processLinks: true,
+                process: false,
+                htmlhint: undefined,
+                docroot: undefined,
+                serverPort: 8888
+            });
 
-		// nothing to do
-		if (this.files.length < 1) {
-			grunt.log.warn('Destination not written because no source files were provided.');
-			return;
-		}
+        // nothing to do
+        if (this.files.length < 1) {
+            grunt.log.warn('Destination not written because no source files were provided.');
+            return;
+        }
 
-		// read config file for htmlhint if available
-		if (options.htmlhintrc) {
-			var rc = grunt.file.readJSON(options.htmlhintrc);
-			grunt.util._.defaults(options.htmlhint, rc);
-			delete options.htmlhintrc;
-		}
+        // read config file for htmlhint if available
+        if (options.htmlhintrc) {
+            var rc = grunt.file.readJSON(options.htmlhintrc);
+            grunt.util._.defaults(options.htmlhint, rc);
+            delete options.htmlhintrc;
+        }
 
-		// normalize htmlhint options
-		// htmllint only checks for rulekey, so remove rule if set to false
-		if (typeof options.htmlhint !== 'undefined') {
-			for (var i in options.htmlhint) {
-				if (!options.htmlhint[i]) {
-					delete options.htmlhint[i];
-				}
-			}
-		}
+        // normalize htmlhint options
+        // htmllint only checks for rulekey, so remove rule if set to false
+        if (typeof options.htmlhint !== 'undefined') {
+            for (var i in options.htmlhint) {
+                if (!options.htmlhint[i]) {
+                    delete options.htmlhint[i];
+                }
+            }
+        }
 
-		// Loop files array
-		grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
-			// try to get docroot
-			// first: docroot from options
-			// third: use process cwd
-			var docroot = path.normalize(options.docroot || f.orig.cwd || process.cwd());
+        // $_GET data
+        if (typeof options.getData !== 'undefined') {
+            queryString = qs.stringify(options.getData);
+        }
 
-			// check docroot
-			if (!grunt.file.exists(docroot)) {
-				grunt.log.warn('Docroot "' + docroot + '" does not exist');
-				return nextFileObj();
-			}
+        // Loop files array
+        grunt.util.async.forEachSeries(this.files, function(f, nextFileObj) {
+            // try to get docroot
+            // first: docroot from options
+            // third: use process cwd
+            var docroot = path.normalize(options.docroot || f.orig.cwd || process.cwd());
 
-			// absolutize docroot
-			if (!grunt.file.isPathAbsolute(docroot)) {
-				docroot = path.normalize(path.join(process.cwd(),docroot));
-			}
+            // check docroot
+            if (!grunt.file.exists(docroot)) {
+                grunt.log.warn('Docroot "' + docroot + '" does not exist');
+                return nextFileObj();
+            }
 
-			// remove trailing slash
-			docroot = docroot.replace(/\/$/,'');
+            // absolutize docroot
+            if (!grunt.file.isPathAbsolute(docroot)) {
+                docroot = path.normalize(path.join(process.cwd(), docroot));
+            }
 
-			// Warn on and remove invalid source files (if nnull was set).
-			var files = f.src.filter(function (filepath) {
-				if (!grunt.file.exists(filepath)) {
-					grunt.log.warn('Source file "' + filepath + '" not found.');
-					return false;
-				} else {
-					return true;
-				}
-			});
+            // remove trailing slash
+            docroot = docroot.replace(/\/$/, '');
 
-			// check files
-			if (files.length === 0) {
-				grunt.log.warn('Destination not written because no source files were found.');
+            // Warn on and remove invalid source files (if nnull was set).
+            var files = f.src.filter(function(filepath) {
+                if (!grunt.file.exists(filepath)) {
+                    grunt.log.warn('Source file "' + filepath + '" not found.');
+                    return false;
+                } else {
+                    return true;
+                }
+            });
 
-				// No src files, goto next target. Warn would have been issued above.
-				return nextFileObj();
-			}
+            // check files
+            if (files.length === 0) {
+                grunt.log.warn('Destination not written because no source files were found.');
 
-			// check if dest is directory
-			if (detectDestType(f.dest) === 'directory') {
-				targetDirectory = path.normalize(f.dest);
-			} else {
-				targetDirectory = path.dirname(f.dest);
-			}
+                // No src files, goto next target. Warn would have been issued above.
+                return nextFileObj();
+            }
 
-			// make shure dest directory exists
-			if (!grunt.file.isDir(targetDirectory)) {
-				grunt.file.mkdir(targetDirectory);
-			}
+            // check if dest is directory
+            if (detectDestType(f.dest) === 'directory') {
+                targetDirectory = path.normalize(f.dest);
+            } else {
+                targetDirectory = path.dirname(f.dest);
+            }
 
-			grunt.util.async.concatSeries(files, function (file, next) {
-				var target,uri = computeUri(docroot,file);
+            // make shure dest directory exists
+            if (!grunt.file.isDir(targetDirectory)) {
+                grunt.file.mkdir(targetDirectory);
+            }
 
-				// check if uri exists
-				if (!grunt.file.exists(path.join(docroot,uri))) {
-					grunt.log.warn('Source file not found: ',uri);
-					return;
-				}
+            grunt.util.async.concatSeries(files, function(file, next) {
+                var target, uri = computeUri(docroot, file);
 
-				// compute target filename
-				if (detectDestType(f.dest) === 'directory') {
-					target = path.join(targetDirectory,path.basename(uri,'.php') + '.html');
-				} else {
-					target = path.join(targetDirectory,path.basename(f.dest));
-				}
+                // check if uri exists
+                if (!grunt.file.exists(path.join(docroot, uri))) {
+                    grunt.log.warn('Source file not found: ', uri);
+                    return;
+                }
 
-				grunt.log.debug('----------------------------------');
-				grunt.log.debug('docroot: ',docroot);
-				grunt.log.debug('uri',uri);
-				grunt.log.debug('target',target);
-				grunt.log.debug('----------------------------------');
+                // compute target filename
+                if (detectDestType(f.dest) === 'directory') {
+                    target = path.join(targetDirectory, path.basename(uri, '.php') + '.html');
+                } else {
+                    target = path.join(targetDirectory, path.basename(f.dest));
+                }
 
-				// start server
-				middleware = gateway(docroot, {
-					'.php': 'php-cgi'
-				});
+                grunt.log.debug('----------------------------------');
+                grunt.log.debug('docroot: ', docroot);
+                grunt.log.debug('uri', uri);
+                grunt.log.debug('target', target);
+                grunt.log.debug('----------------------------------');
 
-				// start server with php middleware
-				app = http.createServer(function (req, res) {
-					// Pass the request to gateway middleware
-					middleware(req, res, function (err) {
-						grunt.log.warn(err);
-						res.writeHead(204, err);
-						res.end();
-					});
-				});
+                // start server
+                middleware = gateway(docroot, {
+                    '.php': 'php-cgi'
+                });
 
-				grunt.log.write('Processing ' + file +'...');
+                // start server with php middleware
+                app = http.createServer(function(req, res) {
+                    // Pass the request to gateway middleware
+                    middleware(req, res, function(err) {
+                        grunt.log.warn(err);
+                        res.writeHead(204, err);
+                        res.end();
+                    });
+                });
 
-
-				compilePhp(options.serverPort, uri, function (response, err) {
-
-					// replace relative php links with corresponding html link
-					if (response && options.processLinks) {
-						_.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm),function(link){
-							if (link.match(/:\/\//)) {
-								return;
-							}
-							var hlink = link.replace(/(\w)\.php([^\w])/g,'$1.html$2');
-							response = response.replace(link,hlink);
-						});
-					}
-
-					// doeas the last part of the job
-					var finish = function(target,response,cb){
-						// Lint generated html and check if response is  empty
-						var messages = HTMLHint.verify(response || '', options.htmlhint),
-							empty = typeof response === 'undefined' || response === '';
-
-						// move on to the next file if everything went right
-						if (!err && messages.length === 0 && !empty) {
-							grunt.file.write(target,response);
-							grunt.log.ok();
-							grunt.log.debug(target + ' written');
-							compiled.push(target);
-
-						// there was an error, show messages to the user if applicable and move on
-						} else {
-							grunt.log.error();
-
-							if (empty) {
-								grunt.log.warn('Resulting HTML is empty');
-							}
+                grunt.log.write('Processing ' + file + '...');
 
 
-							// output messages
-							messages.forEach(function( message ) {
-								grunt.log.writeln( "[".red + ( "L" + message.line ).yellow + ":".red + ( "C" + message.col ).yellow + "]".red + ' ' + message.message.yellow );
-								var evidence = message.evidence,
-									col = message.col;
-								if (col === 0) {
-									evidence = '?'.inverse.red + evidence;
-								} else if (col > evidence.length) {
-									evidence = evidence + ' '.inverse.red;
-								} else {
-									evidence = evidence.slice(0, col - 1) + evidence[col - 1].inverse.red + evidence.slice(col);
-								}
+                compilePhp(options.serverPort, uri, queryString, function(response, err) {
 
-							});
-						}
+                    // replace relative php links with corresponding html link
+                    if (response && options.processLinks) {
+                        _.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm), function(link) {
+                            if (link.match(/:\/\//)) {
+                                return;
+                            }
+                            var hlink = link.replace(/(\w)\.php([^\w])/g, '$1.html$2');
+                            response = response.replace(link, hlink);
+                        });
+                    }
 
-						cb();
-					};
+                    // doeas the last part of the job
+                    var finish = function(target, response, cb) {
+                        // Lint generated html and check if response is  empty
+                        var messages = HTMLHint.verify(response || '', options.htmlhint),
+                            empty = typeof response === 'undefined' || response === '';
 
-					// processOutput function
-					if (options.process && typeof options.process === 'function') {
-						options.process(response,function callback(modified){
-							finish(target,modified,next);
-						});
-					} else {
-						finish(target,response,next);
-					}
+                        // move on to the next file if everything went right
+                        if (!err && messages.length === 0 && !empty) {
+                            grunt.file.write(target, response);
+                            grunt.log.ok();
+                            grunt.log.debug(target + ' written');
+                            compiled.push(target);
 
-				});
-			}, function () {
-				grunt.log.debug('done');
-				nextFileObj();
-			});
+                            // there was an error, show messages to the user if applicable and move on
+                        } else {
+                            grunt.log.error();
 
-		}, cb);
-	});
+                            if (empty) {
+                                grunt.log.warn('Resulting HTML is empty');
+                            }
 
 
-	/**
-	 * Use server with gateway middleware to generate html for the given source
-	 * @param {int} port
-	 * @param {string} uri
-	 * @param {function} callback
-	 */
-	var compilePhp = function (port, uri, callback) {
-		app.listen(port);
-		request('http://localhost:'+ port + uri, function (error, response, body) {
-			app.close();
-			callback(body,error);
-		}).end();
-	};
+                            // output messages
+                            messages.forEach(function(message) {
+                                grunt.log.writeln("[".red + ( "L" + message.line ).yellow + ":".red + ( "C" + message.col ).yellow + "]".red + ' ' + message.message.yellow);
+                                var evidence = message.evidence,
+                                    col = message.col;
+                                if (col === 0) {
+                                    evidence = '?'.inverse.red + evidence;
+                                } else if (col > evidence.length) {
+                                    evidence = evidence + ' '.inverse.red;
+                                } else {
+                                    evidence = evidence.slice(0, col - 1) + evidence[col - 1].inverse.red + evidence.slice(col);
+                                }
 
-	/**
-	 * Get type of destination path
-	 * @param {string} dest
-	 * @returns {string} directory|file
-	 */
-	var detectDestType = function(dest) {
-		if (grunt.util._.endsWith(dest, '/') || grunt.util._.endsWith(dest, '\\')) {
-			return 'directory';
-		} else {
-			return 'file';
-		}
-	};
+                            });
+                        }
+
+                        cb();
+                    };
+
+                    // processOutput function
+                    if (options.process && typeof options.process === 'function') {
+                        options.process(response, function callback(modified) {
+                            finish(target, modified, next);
+                        });
+                    } else {
+                        finish(target, response, next);
+                    }
+
+                });
+            }, function() {
+                grunt.log.debug('done');
+                nextFileObj();
+            });
+
+        }, cb);
+    });
 
 
-	/**
-	 * Compute URI for gateway relative to docroot
-	 * @param {string} docroot
-	 * @param {sting} file
-	 * @returns {string}
-	 */
-	var computeUri = function(docroot,file) {
-		var uri;
-		// If file ends with a slash apend index file
-		if (file[file.length-1] === '/' || grunt.file.isDir(file)) {
-			file = path.join(file,'index.php');
-		}
+    /**
+     * Use server with gateway middleware to generate html for the given source
+     * @param {int} port
+     * @param {string} uri
+     * @param {function} callback
+     */
+    var compilePhp = function(port, uri, query, callback) {
+        var url = 'http://localhost:' + port + uri;
 
-		// absolutize filepath
-		if (!grunt.file.isPathAbsolute(path.dirname(file))) {
-			file = path.join(process.cwd(),file);
-		}
+        // append query string to url
+        if (query) {
+            url += '?' + query;
+        }
 
-		if (win32) {
-			// use the correct slashes for uri
-			uri = file.replace(docroot,'').replace(/[\\]/g,'/');
-		} else {
-			uri = file.replace(docroot,'');
-		}
+        app.listen(port);
 
-		// ensure that we have an absolute url
-		if (uri.substr(0,1) !== '/') {
-			uri = '/'+uri;
-		}
+        // start request
+        request(url,function(error, response, body) {
+            app.close();
+            callback(body, error);
+        }).end();
+    };
 
-		return uri;
-	};
+    /**
+     * Get type of destination path
+     * @param {string} dest
+     * @returns {string} directory|file
+     */
+    var detectDestType = function(dest) {
+        if (grunt.util._.endsWith(dest, '/') || grunt.util._.endsWith(dest, '\\')) {
+            return 'directory';
+        } else {
+            return 'file';
+        }
+    };
 
+
+    /**
+     * Compute URI for gateway relative to docroot
+     * @param {string} docroot
+     * @param {sting} file
+     * @returns {string}
+     */
+    var computeUri = function(docroot, file) {
+        var uri;
+        // If file ends with a slash apend index file
+        if (file[file.length - 1] === '/' || grunt.file.isDir(file)) {
+            file = path.join(file, 'index.php');
+        }
+
+        // absolutize filepath
+        if (!grunt.file.isPathAbsolute(path.dirname(file))) {
+            file = path.join(process.cwd(), file);
+        }
+
+        if (win32) {
+            // use the correct slashes for uri
+            uri = file.replace(docroot, '').replace(/[\\]/g, '/');
+        } else {
+            uri = file.replace(docroot, '');
+        }
+
+        // ensure that we have an absolute url
+        if (uri.substr(0, 1) !== '/') {
+            uri = '/' + uri;
+        }
+
+        return uri;
+    };
 
 
 };

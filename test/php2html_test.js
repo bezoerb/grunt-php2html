@@ -87,5 +87,14 @@ exports.php2html = {
 		test.equal(grunt.file.read('tmp/test/env/SCRIPT_NAME.html'), '/test/env/SCRIPT_NAME.php', 'SCRIPT_NAME schould be relative script path');
 		test.equal(grunt.file.read('tmp/test/env/SCRIPT_FILENAME.html'), path.join(process.cwd(),'test/env/SCRIPT_FILENAME.php'), 'SCRIPT_FILENAME schould be absolute script path');
 		test.done();
-	}
+	},
+
+    'getData': function (test) {
+        var expected = grunt.file.read('test/expected/get.html').replace(/[\s\t\r\n]+/gm,''),
+            actual = grunt.file.read('tmp/data/get.html').replace(/[\s\t\r\n]+/gm,'');
+
+        test.expect(1);
+        test.equal(actual,expected,'Should output data from query string');
+        test.done();
+    }
 };

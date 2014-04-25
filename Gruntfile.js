@@ -91,7 +91,17 @@ module.exports = function (grunt) {
 				files: {
 					'tmp/processTest/': ['test/fixtures/index.php']
 				}
-			}
+			},
+
+            'getData': {
+                options: {
+                    htmlhint: {},
+                    getData: {test: 42, arr: [1,2,3,4], obj: {a:1,b:2,c:3}}
+                },
+                files: {
+                    'tmp/data/': ['test/fixtures/get.php']
+                }
+            }
 		},
 
 		// Unit tests.
@@ -107,7 +117,7 @@ module.exports = function (grunt) {
 
 	// Whenever the "test" task is run, first clean the "tmp" dir, then run this
 	// plugin's task(s), then test the result.
-	grunt.registerTask('test', ['clean','php2html','nodeunit', 'clean']);
+	grunt.registerTask('test', ['clean','php2html','nodeunit'/*, 'clean'*/]);
 
 	// By default, lint and run all tests.
 	grunt.registerTask('default', ['jshint', 'test']);
