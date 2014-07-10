@@ -11,6 +11,7 @@ var path = require('path'),
     _ = require('lodash'),
     fs = require('fs'),
     qs = require('qs'),
+    shjs = require("shelljs"),
     win32 = process.platform === 'win32';
 
 module.exports = function(grunt) {
@@ -62,7 +63,7 @@ module.exports = function(grunt) {
         // read config file for htmlhint if available
         if (options.htmlhintrc) {
             if (options.htmlhintrc === true) {
-                options.htmlhintrc = findFile('.htmlhintrc',process.cwd);
+                options.htmlhintrc = findFile('.htmlhintrc',process.cwd());
             }
 
             try {
@@ -208,7 +209,7 @@ module.exports = function(grunt) {
                         if (options.htmlhint !== false) {
                             messages = HTMLHint.verify(response || '', options.htmlhint);
                         }
-                  
+
                         // move on to the next file if everything went right
                         if (!err && messages.length === 0 && !empty) {
                             grunt.file.write(target, response);
