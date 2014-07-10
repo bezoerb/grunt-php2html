@@ -40,6 +40,7 @@ module.exports = function (grunt) {
 				options: {
 					// relative links should be renamed from .php to .html
 					processLinks: true,
+                    htmlhintrc: true,
 					htmlhint: {}
 				},
 				files: [

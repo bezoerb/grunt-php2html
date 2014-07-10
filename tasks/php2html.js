@@ -70,7 +70,7 @@ module.exports = function(grunt) {
                 var rc = grunt.file.readJSON(options.htmlhintrc);
                 grunt.util._.defaults(options.htmlhint, rc);
             } catch (err) {
-                grunt.log.error(err);
+                grunt.log.error('.htmlhintrc not found!');
             }
             delete options.htmlhintrc;
         }
