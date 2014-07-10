@@ -61,19 +61,32 @@ module.exports = function(grunt) {
 
         // read config file for htmlhint if available
         if (options.htmlhintrc) {
-            var rc = grunt.file.readJSON(options.htmlhintrc);
-            grunt.util._.defaults(options.htmlhint, rc);
+            if (options.htmlhintrc === true) {
+                options.htmlhintrc = findFile('.htmlhintrc',process.cwd);
+            }
+
+            try {
+                var rc = grunt.file.readJSON(options.htmlhintrc);
+                grunt.util._.defaults(options.htmlhint, rc);
+            } catch (err) {
+                grunt.log.error(err);
+            }
             delete options.htmlhintrc;
         }
 
         // normalize htmlhint options
         // htmllint only checks for rulekey, so remove rule if set to false
-        if (typeof options.htmlhint !== 'undefined') {
+        if (typeof options.htmlhint !== 'undefined' && _.isObject(options.htmlhint)) {
             for (var i in options.htmlhint) {
                 if (!options.htmlhint[i]) {
                     delete options.htmlhint[i];
                 }
             }
+        }
+
+        // set to undefined to use default params when value is true
+        if (options.htmlhint === true) {
+            options.htmlhint = undefined;
         }
 
         // $_GET data
@@ -187,10 +200,15 @@ module.exports = function(grunt) {
 
                     // doeas the last part of the job
                     var finish = function(target, response, cb) {
-                        // Lint generated html and check if response is  empty
-                        var messages = HTMLHint.verify(response || '', options.htmlhint),
+                        var messages = [],
                             empty = typeof response === 'undefined' || response === '';
 
+
+                        // Lint generated html and check if response is  empty
+                        if (options.htmlhint !== false) {
+                            messages = HTMLHint.verify(response || '', options.htmlhint);
+                        }
+                  
                         // move on to the next file if everything went right
                         if (!err && messages.length === 0 && !empty) {
                             grunt.file.write(target, response);
@@ -314,6 +332,48 @@ module.exports = function(grunt) {
 
         return uri;
     };
+
+    // Storage for memoized results from find file
+    // Should prevent lots of directory traversal &
+    // lookups when liniting an entire project
+    var findFileResults = {};
+
+    /**
+     * Searches for a file with a specified name starting with
+     * 'dir' and going all the way up either until it finds the file
+     * or hits the root.
+     *
+     * copied from
+     * https://github.com/jshint/jshint/blob/master/src/cli.js
+     *
+     * @param {string} name filename to search for (e.g. .jshintrc)
+     * @param {string} dir  directory to start search from (default:
+     *                      current working directory)
+     *
+     * @returns {string} normalized filename
+     */
+    function findFile(name, dir) {
+        dir = dir || process.cwd();
+
+        var filename = path.normalize(path.join(dir, name));
+        if (findFileResults[filename] !== undefined) {
+            return findFileResults[filename];
+        }
+
+        var parent = path.resolve(dir, "../");
+
+        if (shjs.test("-e", filename)) {
+            findFileResults[filename] = filename;
+            return filename;
+        }
+
+        if (dir === parent) {
+            findFileResults[filename] = null;
+            return null;
+        }
+
+        return findFile(name, parent);
+    }
 
 
 };
