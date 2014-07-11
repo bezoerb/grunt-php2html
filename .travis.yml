@@ -4,5 +4,4 @@ node_js:
 before_install:
   - sudo apt-get update
   - sudo apt-get install php5-cgi
-  - npm update -g npm
   - npm install -g grunt-cli
