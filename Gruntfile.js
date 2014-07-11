@@ -40,8 +40,7 @@ module.exports = function (grunt) {
 				options: {
 					// relative links should be renamed from .php to .html
 					processLinks: true,
-                    htmlhintrc: true,
-					htmlhint: {}
+					htmlhint: false,
 				},
 				files: [
 					{expand: true, cwd: 'test/', src: ['**/*.php','!fixtures/error.php','!env/*.php'], dest: 'tmp/default', ext: '.html' }
@@ -51,7 +50,7 @@ module.exports = function (grunt) {
 			'dest-as-target': {
 				options: {
 					processLinks: false,
-					htmlhint: {},
+					htmlhint: false,
 					docroot: 'test'
 				},
 				files: {
@@ -73,7 +72,7 @@ module.exports = function (grunt) {
 
 			'environment': {
 				options: {
-					htmlhint: {}
+					htmlhint: false,
 				},
 				files: [
 					{expand: true, cwd: './', src: ['test/env/*.php'], dest: 'tmp/', ext: '.html' }
@@ -84,7 +83,7 @@ module.exports = function (grunt) {
 			'processTest': {
 				options: {
 					processLinks: false,
-					htmlhint: {},
+					htmlhint: false,
 					process: function(response,callback) {
 						callback(':-)');
 					}
@@ -96,7 +95,7 @@ module.exports = function (grunt) {
 
             'getData': {
                 options: {
-                    htmlhint: {},
+                    htmlhint: false,
                     getData: {test: 42, arr: [1,2,3,4], obj: {a:1,b:2,c:3}}
                 },
                 files: {
