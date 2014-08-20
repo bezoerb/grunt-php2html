@@ -80,6 +80,11 @@ module.exports = function(grunt) {
             options.htmlhint = undefined;
         }
 
+        // set empty object to false to keep backwards compatibility
+        if (_.isObject(options.htmlhint) && Object.keys(options.htmlhint).length ===0) {
+            options.htmlhint = false;
+        }
+
         // $_GET data
         if (typeof options.getData !== 'undefined') {
             queryString = qs.stringify(options.getData);
