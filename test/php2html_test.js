@@ -67,6 +67,20 @@ exports.php2html = {
 
 	},
 
+    'first-error-ignored': function (test) {
+        test.expect(2);
+
+        test.equal(grunt.file.exists('tmp/only-index/error-ignored.html'), true, 'file should be created when error is ignored.');
+
+        var actual = grunt.file.read('tmp/only-index/error-ignored.html').replace(/[\s\r\n]/gm, '');
+        var expected = grunt.file.read('test/expected/error-ignored.html').replace(/[\s\r\n]/gm, '');
+        test.equal(actual, expected, 'it should output expected html');
+
+
+        test.done();
+
+    },
+
 	'processTest': function (test) {
 		test.expect(1);
 

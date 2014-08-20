@@ -70,6 +70,17 @@ module.exports = function (grunt) {
 				}
 			},
 
+            'first-error-ignored': {
+                options: {
+                    processLinks: false,
+                    htmlhint: {
+                        'tag-pair': false
+                    }
+                },
+                src: 'test/fixtures/error.php',
+                dest: 'tmp/only-index/error-ignored.html'
+            },
+
 			'environment': {
 				options: {
 					htmlhint: false,

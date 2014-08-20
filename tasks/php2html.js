@@ -75,16 +75,6 @@ module.exports = function(grunt) {
             delete options.htmlhintrc;
         }
 
-        // normalize htmlhint options
-        // htmllint only checks for rulekey, so remove rule if set to false
-        if (typeof options.htmlhint !== 'undefined' && _.isObject(options.htmlhint)) {
-            for (var i in options.htmlhint) {
-                if (!options.htmlhint[i]) {
-                    delete options.htmlhint[i];
-                }
-            }
-        }
-
         // set to undefined to use default params when value is true
         if (options.htmlhint === true) {
             options.htmlhint = undefined;
@@ -207,6 +197,7 @@ module.exports = function(grunt) {
 
                         // Lint generated html and check if response is  empty
                         if (options.htmlhint !== false) {
+                            console.log(options.htmlhint);
                             messages = HTMLHint.verify(response || '', options.htmlhint);
                         }
 
