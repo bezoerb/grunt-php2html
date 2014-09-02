@@ -202,7 +202,6 @@ module.exports = function(grunt) {
 
                         // Lint generated html and check if response is  empty
                         if (options.htmlhint !== false) {
-                            console.log(options.htmlhint);
                             messages = HTMLHint.verify(response || '', options.htmlhint);
                         }
 
