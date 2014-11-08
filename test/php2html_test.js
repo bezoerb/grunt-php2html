@@ -67,6 +67,15 @@ exports.php2html = {
 
 	},
 
+    'first-error-nohalt': function (test) {
+        test.expect(1);
+
+        test.equal(grunt.file.exists('tmp/nohalt/error.html'), true, 'file should be created on error.');
+
+        test.done();
+
+    },
+
     'first-error-ignored': function (test) {
         test.expect(2);
 

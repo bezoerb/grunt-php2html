@@ -43,7 +43,13 @@ module.exports = function (grunt) {
 					htmlhint: false,
 				},
 				files: [
-					{expand: true, cwd: 'test/', src: ['**/*.php','!fixtures/error.php','!env/*.php'], dest: 'tmp/default', ext: '.html' }
+					{
+                        expand: true,
+                        cwd: 'test/',
+                        src: ['**/*.php', '!fixtures/error.php', '!env/*.php'],
+                        dest: 'tmp/default',
+                        ext: '.html'
+                    }
 				]
 			},
 
@@ -70,15 +76,28 @@ module.exports = function (grunt) {
 				}
 			},
 
-            'first-error-ignored': {
+            'first-error-nohalt': {
                 options: {
                     processLinks: false,
                     htmlhint: {
-                        'tag-pair': false
-                    }
+                        'tag-pair': true
+                    },
+                    haltOnError: false
                 },
-                src: 'test/fixtures/error.php',
-                dest: 'tmp/only-index/error-ignored.html'
+                files: {
+                    'tmp/nohalt/': ['test/fixtures/error.php']
+                }
+            },
+
+            'first-error-ignored': {
+              options: {
+                  processLinks: false,
+                  htmlhint: {
+                      'tag-pair': false
+                  }
+              },
+              src: 'test/fixtures/error.php',
+              dest: 'tmp/only-index/error-ignored.html'
             },
 
 			'environment': {
@@ -107,7 +126,7 @@ module.exports = function (grunt) {
             'getData': {
                 options: {
                     htmlhint: false,
-                    getData: {test: 42, arr: [1,2,3,4], obj: {a:1,b:2,c:3}}
+                    getData: {test: 42, arr: [1, 2, 3, 4], obj: {a: 1, b: 2, c: 3}}
                 },
                 files: {
                     'tmp/data/': ['test/fixtures/get.php']
