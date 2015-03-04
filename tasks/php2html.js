@@ -12,6 +12,7 @@ var path = require('path'),
     fs = require('fs'),
     qs = require('qs'),
     shjs = require("shelljs"),
+    ini = require('ini'),
     win32 = process.platform === 'win32';
 
 module.exports = function (grunt) {
@@ -42,6 +43,7 @@ module.exports = function (grunt) {
     // Please see the Grunt documentation for more information regarding task
     // creation: http://gruntjs.com/creating-tasks
     grunt.registerMultiTask('php2html', 'Generate HTML from PHP', function () {
+        var done = this.async();
 
         var cb = this.async(),
             targetDirectory,
@@ -60,6 +62,8 @@ module.exports = function (grunt) {
             grunt.log.warn('Destination not written because no source files were provided.');
             return;
         }
+
+        turnOnShortOpenTag();
 
         // read config file for htmlhint if available
         if (options.htmlhintrc) {
@@ -380,5 +384,25 @@ module.exports = function (grunt) {
         return findFile(name, parent);
     }
 
+    function turnOnShortOpenTag() {
+        var phpiniOutput = shjs.exec('php --ini', {async: false, silent: true}).output;
 
+        var iniIndex = phpiniOutput.indexOf(win32 ? '\\php.ini' : '/php.ini');
+
+        var phpiniPath = phpiniOutput.substring(phpiniOutput.substring(0, iniIndex).lastIndexOf(' ') + 1, iniIndex + 8);
+
+        if (phpiniPath) {
+            grunt.log.ok('PHP ini file path: ' + phpiniPath);
+            var phpini = ini.parse(fs.readFileSync(phpiniPath, 'utf-8'));
+
+            if (phpini.PHP.short_open_tag === 'Off') {
+                grunt.log.ok('`short_open_tag` is off. It may be turned on...');
+                phpini.PHP.short_open_tag = 'On';
+
+                fs.writeFileSync(phpiniPath, ini.stringify(phpini));
+
+                grunt.log.ok('`short_open_tag` is turned on. OK...');
+            }
+        }
+    }
 };

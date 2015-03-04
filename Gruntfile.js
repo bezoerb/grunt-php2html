@@ -40,7 +40,7 @@ module.exports = function (grunt) {
 				options: {
 					// relative links should be renamed from .php to .html
 					processLinks: true,
-					htmlhint: false,
+					htmlhint: false
 				},
 				files: [
 					{
@@ -102,7 +102,7 @@ module.exports = function (grunt) {
 
 			'environment': {
 				options: {
-					htmlhint: false,
+					htmlhint: false
 				},
 				files: [
 					{expand: true, cwd: './', src: ['test/env/*.php'], dest: 'tmp/', ext: '.html' }
@@ -131,6 +131,12 @@ module.exports = function (grunt) {
                 files: {
                     'tmp/data/': ['test/fixtures/get.php']
                 }
+            },
+
+            'shortOpenTag': {
+                files: [
+                    {expand: true, cwd: './', src: ['test/env/PHP_SHORT_OPEN_TAG.php'], dest: 'tmp/', ext: '.html' }
+                ]
             }
 		},
 
