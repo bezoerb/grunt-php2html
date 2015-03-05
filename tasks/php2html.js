@@ -12,7 +12,6 @@ var path = require('path'),
     fs = require('fs'),
     qs = require('qs'),
     shjs = require("shelljs"),
-    ini = require('ini'),
     win32 = process.platform === 'win32';
 
 module.exports = function (grunt) {
@@ -384,24 +383,65 @@ module.exports = function (grunt) {
         return findFile(name, parent);
     }
 
+    /**
+     * The PHP code is enclosed in special start and end processing instructions `<?php ?>`.
+     * But we used to enclose The PHP code using 'short open tag'(<? ?>).
+     * For this option, we should change to `On`.
+     */
     function turnOnShortOpenTag() {
+        // To find path of php.ini, execute `php --ini`
         var phpiniOutput = shjs.exec('php --ini', {async: false, silent: true}).output;
 
         var iniIndex = phpiniOutput.indexOf(win32 ? '\\php.ini' : '/php.ini');
-
         var phpiniPath = phpiniOutput.substring(phpiniOutput.substring(0, iniIndex).lastIndexOf(' ') + 1, iniIndex + 8);
 
         if (phpiniPath) {
             grunt.log.ok('PHP ini file path: ' + phpiniPath);
-            var phpini = ini.parse(fs.readFileSync(phpiniPath, 'utf-8'));
 
-            if (phpini.PHP.short_open_tag === 'Off') {
-                grunt.log.ok('`short_open_tag` is off. It may be turned on...');
-                phpini.PHP.short_open_tag = 'On';
+            var iniStr = fs.readFileSync(phpiniPath, {encoding: 'utf-8'}),
+                tempStr = iniStr,
+                lineStr,
+                idx = -1,
+                offset = 0,
+                propName,
+                propValue;
 
-                fs.writeFileSync(phpiniPath, ini.stringify(phpini));
+            var SOT_PROP_NAME__ = 'short_open_tag',
+                LINE_SEPARATOR = win32 ? '\r\n' : '\n';
 
-                grunt.log.ok('`short_open_tag` is turned on. OK...');
+            while ((idx = tempStr.indexOf(LINE_SEPARATOR)) > -1) {
+                lineStr = tempStr.substring(0, idx).trim();
+                tempStr = tempStr.substring(idx + 1);
+                offset += idx + 1;
+
+                // ignore comment and section.
+                if (lineStr.indexOf(';') === 0 ||
+                    lineStr.indexOf('=') === -1) {
+                    continue;
+                }
+
+                var prop = lineStr.split('=');
+
+                propName = prop[0].trim();
+
+                if (propName === SOT_PROP_NAME__ &&
+                    prop[1] !== undefined) {
+                    propValue = prop[1].trim();
+
+                    break;
+                }
+            }
+
+            // line separator.
+            offset -= 1;
+
+            if (propValue === 'Off') {
+                var head = iniStr.substring(0, iniStr.substring(0, offset).lastIndexOf(LINE_SEPARATOR) + 1);
+                var foot = iniStr.substring(offset);
+
+                var modified = head + SOT_PROP_NAME__ + ' = On' + foot;
+
+                fs.writeFileSync(phpiniPath, modified);
             }
         }
     }

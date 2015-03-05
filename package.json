@@ -39,7 +39,6 @@
   "dependencies": {
     "gateway": "^0.2.1",
     "htmlhint": "~0.9.6",
-    "ini": "^1.3.3",
     "lodash": "^2.4.1",
     "prompt": "^0.2.14",
     "qs": "0.6.6",
