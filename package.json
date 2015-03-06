@@ -40,6 +40,7 @@
     "gateway": "^0.2.1",
     "htmlhint": "~0.9.6",
     "lodash": "^2.4.1",
+    "prompt": "^0.2.14",
     "qs": "0.6.6",
     "request": "^2.37.0",
     "shelljs": "^0.3.0"
