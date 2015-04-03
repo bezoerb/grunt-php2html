@@ -138,6 +138,12 @@ Default value: `{}`
 
 Pass data to php file using $_GET.
 
+#### options.haltOnError
+Type: `Boolean`
+Default value: `true`
+
+Set to `false` to write dest html files on error. Usefull for debugging.
+
 ### Usage Examples
 
 ```js
