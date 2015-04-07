@@ -75,6 +75,11 @@ grunt.initConfig({
 	  docroot: <mydocroot relative to Gruntfile.js>
       getData: {'key': 'value'}
 
+#### options.router
+Type: `String`
+Default value: `undefined`
+
+Use a router script.
 
 #### options.processLinks
 Type: `Boolean`

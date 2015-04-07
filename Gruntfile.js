@@ -46,7 +46,7 @@ module.exports = function (grunt) {
 					{
                         expand: true,
                         cwd: 'test/',
-                        src: ['**/*.php', '!fixtures/error.php', '!env/*.php'],
+                        src: ['**/*.php', '!fixtures/error.php', '!fixtures/router.php', '!env/*.php'],
                         dest: 'tmp/default',
                         ext: '.html'
                     }
@@ -131,7 +131,18 @@ module.exports = function (grunt) {
                 files: {
                     'tmp/data/': ['test/fixtures/get.php']
                 }
+            },
+
+            'router': {
+                options: {
+                    htmlhint: false,
+                    router: 'test/fixtures/router.php'
+                },
+                src: '/myroute',
+                dest: 'tmp/router/myroute.html'
             }
+
+
 		},
 
 		// Unit tests.

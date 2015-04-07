@@ -7,36 +7,20 @@
  */
 'use strict';
 
-var path = require('path'),
-    _ = require('lodash'),
-    fs = require('fs'),
-    qs = require('qs'),
-    shjs = require("shelljs"),
-    win32 = process.platform === 'win32';
+
 
 module.exports = function (grunt) {
 
-    var path = require('path'),
+    var _ = require('lodash'),
+        shjs = require("shelljs"),
+        win32 = process.platform === 'win32',
+        path = require('path'),
         http = require('http'),
+        php2html = require('php2html'),
         HTMLHint = require("htmlhint").HTMLHint,
         request = require('request'),
         gateway = require('gateway'),
-        compiled = [],
-        app, middleware;
-
-    // unlink generated html files
-    // usefull if the files get copied and processed later
-    grunt.registerMultiTask('php2htmlUnlink', 'Unlink generated HTML', function () {
-        grunt.log.ok('removing generated files...');
-        compiled.forEach(function (file) {
-            fs.unlink(file, function (err) {
-                if (err) {
-                    grunt.log.warn(err);
-                }
-            });
-
-        });
-    });
+        compiled = [];
 
 
     // Please see the Grunt documentation for more information regarding task
@@ -45,13 +29,10 @@ module.exports = function (grunt) {
 
         var cb = this.async(),
             targetDirectory,
-            queryString = '',
             options = this.options({
-                processLinks: true,
                 process: false,
                 htmlhint: undefined,
                 docroot: undefined,
-                serverPort: 8888,
                 haltOnError: true
             });
 
@@ -86,10 +67,10 @@ module.exports = function (grunt) {
             options.htmlhint = false;
         }
 
-        // $_GET data
-        if (typeof options.getData !== 'undefined') {
-            queryString = qs.stringify(options.getData);
-        }
+        //// $_GET data
+        //if (typeof options.getData !== 'undefined') {
+        //    queryString = qs.stringify(options.getData);
+        //}
 
         // Loop files array
         grunt.util.async.forEachSeries(this.files, function (f, nextFileObj) {
@@ -112,15 +93,22 @@ module.exports = function (grunt) {
             // remove trailing slash
             docroot = docroot.replace(/\/$/, '');
 
-            // Warn on and remove invalid source files (if nnull was set).
+            // Warn on and remove invalid source files (if null was set).
             var files = f.src.filter(function (filepath) {
-                if (!grunt.file.exists(filepath)) {
+                if (!grunt.file.exists(filepath) && !options.router) {
                     grunt.log.warn('Source file "' + filepath + '" not found.');
                     return false;
                 } else {
                     return true;
                 }
+            // add routes
             });
+
+            if (options.router) {
+                files = files.concat(f.orig.src.filter(function (filepath) {
+                    return !/(^!)|(\*)/.test(filepath);
+                }));
+            }
 
             // check files
             if (files.length === 0) {
@@ -142,60 +130,26 @@ module.exports = function (grunt) {
                 grunt.file.mkdir(targetDirectory);
             }
 
-            grunt.util.async.concatSeries(files, function (file, next) {
-                var target, uri = computeUri(docroot, file);
-
-                // check if uri exists
-                if (!grunt.file.exists(path.join(docroot, uri))) {
-                    grunt.log.warn('Source file not found: ', uri);
-                    return;
-                }
+            grunt.util.async.concatSeries(_.uniq(files), function (file, next) {
 
                 // compute target filename
+                var target;
                 if (detectDestType(f.dest) === 'directory') {
-                    target = path.join(targetDirectory, path.basename(uri, '.php') + '.html');
+                    target = path.join(targetDirectory, path.basename(file, '.php') + '.html');
                 } else {
                     target = path.join(targetDirectory, path.basename(f.dest));
                 }
 
                 grunt.log.debug('----------------------------------');
                 grunt.log.debug('docroot: ', docroot);
-                grunt.log.debug('uri', uri);
                 grunt.log.debug('target', target);
                 grunt.log.debug('----------------------------------');
-
-                // start server
-                middleware = gateway(docroot, {
-                    '.php': 'php-cgi'
-                });
-
-                // start server with php middleware
-                app = http.createServer(function (req, res) {
-                    // Pass the request to gateway middleware
-                    middleware(req, res, function (err) {
-                        grunt.log.warn(err);
-                        res.writeHead(204, err);
-                        res.end();
-                    });
-                });
-
                 grunt.log.write('Processing ' + file + '...');
 
+                php2html(file, _.assign(options,{baseDir:docroot}), function (error, response) {
 
-                compilePhp(options.serverPort, uri, queryString, function (response, err) {
 
-                    // replace relative php links with corresponding html link
-                    if (response && options.processLinks) {
-                        _.forEach(response.match(/href=['"]([^'"]+\.php(?:\?[^'"]*)?)['"]/gm), function (link) {
-                            if (link.match(/:\/\//)) {
-                                return;
-                            }
-                            var hlink = link.replace(/(\w)\.php([^\w])/g, '$1.html$2');
-                            response = response.replace(link, hlink);
-                        });
-                    }
-
-                    // doeas the last part of the job
+                    // does the last part of the job
                     var finish = function (target, response, cb) {
                         var messages = [],
                             empty = typeof response === 'undefined' || response === '';
@@ -207,7 +161,7 @@ module.exports = function (grunt) {
                         }
 
                         // move on to the next file if everything went right
-                        if (!err && messages.length === 0 && !empty) {
+                        if (!error && messages.length === 0 && !empty) {
                             grunt.file.write(target, response);
                             grunt.log.ok();
                             grunt.log.debug(target + ' written');
@@ -229,20 +183,9 @@ module.exports = function (grunt) {
                                 }
                             }
 
-
                             // output messages
                             messages.forEach(function (message) {
                                 grunt.log.writeln("[".red + ( "L" + message.line ).yellow + ":".red + ( "C" + message.col ).yellow + "]".red + ' ' + message.message.yellow);
-                                var evidence = message.evidence,
-                                    col = message.col;
-                                if (col === 0) {
-                                    evidence = '?'.inverse.red + evidence;
-                                } else if (col > evidence.length) {
-                                    evidence = evidence + ' '.inverse.red;
-                                } else {
-                                    evidence = evidence.slice(0, col - 1) + evidence[col - 1].inverse.red + evidence.slice(col);
-                                }
-
                             });
                         }
 
@@ -268,28 +211,6 @@ module.exports = function (grunt) {
     });
 
 
-    /**
-     * Use server with gateway middleware to generate html for the given source
-     * @param {int} port
-     * @param {string} uri
-     * @param {function} callback
-     */
-    var compilePhp = function (port, uri, query, callback) {
-        var url = 'http://localhost:' + port + uri;
-
-        // append query string to url
-        if (query) {
-            url += '?' + query;
-        }
-
-        app.listen(port);
-
-        // start request
-        request(url, function (error, response, body) {
-            app.close();
-            callback(body, error);
-        }).end();
-    };
 
     /**
      * Get type of destination path
@@ -305,38 +226,6 @@ module.exports = function (grunt) {
     };
 
 
-    /**
-     * Compute URI for gateway relative to docroot
-     * @param {string} docroot
-     * @param {sting} file
-     * @returns {string}
-     */
-    var computeUri = function (docroot, file) {
-        var uri;
-        // If file ends with a slash apend index file
-        if (file[file.length - 1] === '/' || grunt.file.isDir(file)) {
-            file = path.join(file, 'index.php');
-        }
-
-        // absolutize filepath
-        if (!grunt.file.isPathAbsolute(path.dirname(file))) {
-            file = path.join(process.cwd(), file);
-        }
-
-        if (win32) {
-            // use the correct slashes for uri
-            uri = file.replace(docroot, '').replace(/[\\]/g, '/');
-        } else {
-            uri = file.replace(docroot, '');
-        }
-
-        // ensure that we have an absolute url
-        if (uri.substr(0, 1) !== '/') {
-            uri = '/' + uri;
-        }
-
-        return uri;
-    };
 
     // Storage for memoized results from find file
     // Should prevent lots of directory traversal &
