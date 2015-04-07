@@ -13,13 +13,9 @@ module.exports = function (grunt) {
 
     var _ = require('lodash'),
         shjs = require("shelljs"),
-        win32 = process.platform === 'win32',
         path = require('path'),
-        http = require('http'),
         php2html = require('php2html'),
         HTMLHint = require("htmlhint").HTMLHint,
-        request = require('request'),
-        gateway = require('gateway'),
         compiled = [];
 
 
