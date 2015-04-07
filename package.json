@@ -1,7 +1,7 @@
 {
   "name": "grunt-php2html",
   "description": "Frontend HTML generation with PHP",
-  "version": "0.1.17",
+  "version": "0.2.0",
   "homepage": "https://github.com/bezoerb/grunt-php2html",
   "author": {
     "name": "Ben Zörb",
