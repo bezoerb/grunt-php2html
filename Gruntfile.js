@@ -103,6 +103,7 @@ module.exports = function (grunt) {
 			'environment': {
 				options: {
 					htmlhint: false,
+                    requestHost: 'mydomain.com'
 				},
 				files: [
 					{expand: true, cwd: './', src: ['test/env/*.php'], dest: 'tmp/', ext: '.html' }

@@ -150,6 +150,14 @@ Default value: `true`
 
 Set to `false` to write dest html files on error. Usefull for debugging.
 
+##### requestHost
+Type: `String`
+Default value: `undefined`
+
+Use this option to tweak the request host passed to the `.php` script as `SERVER_NAME` and `SERVER_PORT`.   
+
+
+
 ### Usage Examples
 
 ```js
@@ -157,6 +165,8 @@ grunt.initConfig({
   php2html: {
     default: {
 	  options: {
+	    // tweak $_SERVER['SERVER_NAME'] & $_SERVER['SERVER_HOST'] 
+	    requestHost: 'mydomain.com:8080',
 		// relative links should be renamed from .php to .html
 		processLinks: false,
 		process: function(response,callback) {

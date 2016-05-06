@@ -103,12 +103,13 @@ exports.php2html = {
 
     'environment': function (test) {
         var docrootfix = process.platform === 'win32' ? '\\' : '';
-        test.expect(5);
+        test.expect(6);
         test.equal(grunt.file.read('tmp/test/env/DOCUMENT_ROOT.html'), process.cwd() + docrootfix, 'DOCUMENT_ROOT should be cwd()');
-        test.equal(grunt.file.read('tmp/test/env/PHP_SELF.html'), '/test/env/PHP_SELF.php', 'PHP_SELF schould be relative script path');
-        test.equal(grunt.file.read('tmp/test/env/REQUEST_URI.html'), '/test/env/REQUEST_URI.php', 'REQUEST_URI schould be relative script path');
-        test.equal(grunt.file.read('tmp/test/env/SCRIPT_NAME.html'), '/test/env/SCRIPT_NAME.php', 'SCRIPT_NAME schould be relative script path');
-        test.equal(grunt.file.read('tmp/test/env/SCRIPT_FILENAME.html'), path.join(process.cwd(), 'test/env/SCRIPT_FILENAME.php'), 'SCRIPT_FILENAME schould be absolute script path');
+        test.equal(grunt.file.read('tmp/test/env/PHP_SELF.html'), '/test/env/PHP_SELF.php', 'PHP_SELF should be relative script path');
+        test.equal(grunt.file.read('tmp/test/env/REQUEST_URI.html'), '/test/env/REQUEST_URI.php', 'REQUEST_URI should be relative script path');
+        test.equal(grunt.file.read('tmp/test/env/SCRIPT_NAME.html'), '/test/env/SCRIPT_NAME.php', 'SCRIPT_NAME should be relative script path');
+        test.equal(grunt.file.read('tmp/test/env/SCRIPT_FILENAME.html'), path.join(process.cwd(), 'test/env/SCRIPT_FILENAME.php'), 'SCRIPT_FILENAME should be absolute script path');
+        test.equal(grunt.file.read('tmp/test/env/SERVER_NAME.html'), 'mydomain.com', 'SERVER_NAME should be mydomain.com');
         test.done();
     },
 
