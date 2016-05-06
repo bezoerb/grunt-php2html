@@ -1,9 +1,16 @@
+sudo: false
 language: node_js
 node_js:
-  - 'iojs'
+  - '6'
+  - '5'
+  - '4'
   - '0.12'
-  - '0.10'
+
+addons:
+  apt:
+    packages:
+      - php5
+      - php5-cgi
+
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install php5-cgi
-  - npm install -g grunt-cli
+  - php-cgi --version
