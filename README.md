@@ -1,4 +1,4 @@
-# grunt-php2html [![Build Status](https://travis-ci.org/bezoerb/grunt-php2html.png?branch=master)](https://travis-ci.org/bezoerb/grunt-php2html) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
+# grunt-php2html [![Build Status](https://travis-ci.org/bezoerb/grunt-php2html.svg?branch=master)](https://travis-ci.org/bezoerb/grunt-php2html)
 
 > Frontend HTML generation with PHP
 
