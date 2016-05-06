@@ -14,7 +14,7 @@ module.exports = function (grunt) {
     var _ = require('lodash'),
         shjs = require("shelljs"),
         path = require('path'),
-        php2html = require('php2html'),
+        php2html = require('php2html').default,
         HTMLHint = require("htmlhint").HTMLHint,
         compiled = [];
 

@@ -39,7 +39,7 @@
   "dependencies": {
     "htmlhint": "~0.9.6",
     "lodash": "^2.4.1",
-    "php2html": "0.0.4",
+    "php2html": "^0.2.4",
     "qs": "0.6.6",
     "shelljs": "^0.3.0"
   },
