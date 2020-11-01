@@ -1,16 +1,15 @@
 sudo: false
 language: node_js
 node_js:
-  - '6'
-  - '5'
-  - '4'
-  - '0.12'
+    - '14'
+    - '12'
+    - '10'
 
 addons:
-  apt:
-    packages:
-      - php5
-      - php5-cgi
+    apt:
+        packages:
+            - php
+            - php-cgi
 
 before_install:
-  - php-cgi --version
+    - php-cgi --version

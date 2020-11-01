@@ -1,5 +1,5 @@
 /*
- * grunt-php2html
+ * Grunt-php2html
  * https://github.com/bzoerb/grunt-php2html
  *
  * Copyright (c) 2013 Ben Zörb
@@ -8,10 +8,9 @@
 'use strict';
 
 module.exports = function (grunt) {
-
-	// show elapsed time at the end
+	// Show elapsed time at the end
 	require('time-grunt')(grunt);
-	// load all grunt tasks
+	// Load all grunt tasks
 	require('load-grunt-tasks')(grunt);
 
 	// Project configuration.
@@ -32,24 +31,24 @@ module.exports = function (grunt) {
 			tests: ['tmp']
 		},
 
-        php2htmlclean: { all: { } },
+		php2htmlclean: {all: { }},
 
 		// Configuration to be run (and then tested).
 		php2html: {
 			default: {
 				options: {
-					// relative links should be renamed from .php to .html
+					// Relative links should be renamed from .php to .html
 					processLinks: true,
 					htmlhint: false
 				},
 				files: [
 					{
-                        expand: true,
-                        cwd: 'test/',
-                        src: ['**/*.php', '!fixtures/error.php', '!fixtures/router.php', '!env/*.php'],
-                        dest: 'tmp/default',
-                        ext: '.html'
-                    }
+						expand: true,
+						cwd: 'test/',
+						src: ['**/*.php', '!fixtures/error.php', '!fixtures/router.php', '!env/*.php'],
+						dest: 'tmp/default',
+						ext: '.html'
+					}
 				]
 			},
 
@@ -60,7 +59,7 @@ module.exports = function (grunt) {
 					docroot: 'test'
 				},
 				files: {
-					'tmp/dest-as-target/': ['test/some-other-fixtures/info.php','test/fixtures/index.php']
+					'tmp/dest-as-target/': ['test/some-other-fixtures/info.php', 'test/fixtures/index.php']
 				}
 			},
 
@@ -72,50 +71,50 @@ module.exports = function (grunt) {
 					}
 				},
 				files: {
-					'tmp/only-index/': ['test/fixtures/error.php','test/fixtures/index.php']
+					'tmp/only-index/': ['test/fixtures/error.php', 'test/fixtures/index.php']
 				}
 			},
 
-            'first-error-nohalt': {
-                options: {
-                    processLinks: false,
-                    htmlhint: {
-                        'tag-pair': true
-                    },
-                    haltOnError: false
-                },
-                files: {
-                    'tmp/nohalt/': ['test/fixtures/error.php']
-                }
-            },
+			'first-error-nohalt': {
+				options: {
+					processLinks: false,
+					htmlhint: {
+						'tag-pair': true
+					},
+					haltOnError: false
+				},
+				files: {
+					'tmp/nohalt/': ['test/fixtures/error.php']
+				}
+			},
 
-            'first-error-ignored': {
-              options: {
-                  processLinks: false,
-                  htmlhint: {
-                      'tag-pair': false
-                  }
-              },
-              src: 'test/fixtures/error.php',
-              dest: 'tmp/only-index/error-ignored.html'
-            },
+			'first-error-ignored': {
+				options: {
+					processLinks: false,
+					htmlhint: {
+						'tag-pair': false
+					}
+				},
+				src: 'test/fixtures/error.php',
+				dest: 'tmp/only-index/error-ignored.html'
+			},
 
-			'environment': {
+			environment: {
 				options: {
 					htmlhint: false,
-                    requestHost: 'mydomain.com'
+					requestHost: 'mydomain.com'
 				},
 				files: [
-					{expand: true, cwd: './', src: ['test/env/*.php'], dest: 'tmp/', ext: '.html' }
+					{expand: true, cwd: './', src: ['test/env/*.php'], dest: 'tmp/', ext: '.html'}
 				]
 
 			},
 
-			'processTest': {
+			processTest: {
 				options: {
 					processLinks: false,
 					htmlhint: false,
-					process: function(response,callback) {
+					process(response, callback) {
 						callback(':-)');
 					}
 				},
@@ -124,25 +123,24 @@ module.exports = function (grunt) {
 				}
 			},
 
-            'getData': {
-                options: {
-                    htmlhint: false,
-                    getData: {test: 42, arr: [1, 2, 3, 4], obj: {a: 1, b: 2, c: 3}}
-                },
-                files: {
-                    'tmp/data/': ['test/fixtures/get.php']
-                }
-            },
+			getData: {
+				options: {
+					htmlhint: false,
+					getData: {test: 42, arr: [1, 2, 3, 4], obj: {a: 1, b: 2, c: 3}}
+				},
+				files: {
+					'tmp/data/': ['test/fixtures/get.php']
+				}
+			},
 
-            'router': {
-                options: {
-                    htmlhint: false,
-                    router: 'test/fixtures/router.php'
-                },
-                src: '/myroute',
-                dest: 'tmp/router/myroute.html'
-            }
-
+			router: {
+				options: {
+					htmlhint: false,
+					router: 'test/fixtures/router.php'
+				},
+				src: '/myroute',
+				dest: 'tmp/router/myroute.html'
+			}
 
 		},
 
@@ -153,15 +151,13 @@ module.exports = function (grunt) {
 
 	});
 
-
 	// Actually load this plugin's task(s).
 	grunt.loadTasks('tasks');
 
 	// Whenever the "test" task is run, first clean the "tmp" dir, then run this
 	// plugin's task(s), then test the result.
-	grunt.registerTask('test', ['clean','php2html','nodeunit'/*, 'clean'*/]);
+	grunt.registerTask('test', ['clean', 'php2html', 'nodeunit'/* , 'clean' */]);
 
 	// By default, lint and run all tests.
 	grunt.registerTask('default', ['jshint', 'test']);
-
 };
